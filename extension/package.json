@@ -1,0 +1,6 @@
+{
+  "name": "hood-link-extension",
+  "version": "0.1.0",
+  "description": "Chrome extension bridge for Hood-link",
+  "private": true
+}

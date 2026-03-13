@@ -1,0 +1,2483 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hood-link</title>
+<link rel="icon" href="/logo.svg" type="image/svg+xml">
+<meta name="theme-color" content="#0a0a0a">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0a;
+    --surface: #141414;
+    --surface2: #1e1e1e;
+    --border: #2a2a2a;
+    --text: #e5e5e5;
+    --text2: #888;
+    --accent: #a3e635;
+    --accent2: #84cc16;
+    --red: #ef4444;
+    --yellow: #eab308;
+    --blue: #3b82f6;
+    --purple: #a855f7;
+    --mono: 'SF Mono', 'Cascadia Code', 'Fira Code', Consolas, monospace;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; scrollbar-color: #333 #0a0a0a; scrollbar-width: thin; }
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: #0a0a0a; }
+  ::-webkit-scrollbar-thumb { background: #333; border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: #444; }
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: var(--bg); color: var(--text); min-height: 100vh;
+  }
+  header {
+    border-bottom: 1px solid var(--border); padding: 12px 24px;
+    display: flex; align-items: center; justify-content: space-between;
+    position: sticky; top: 0; background: var(--bg); z-index: 10;
+  }
+  .header-left { display: flex; align-items: center; gap: 10px; }
+  .logo { display: flex; align-items: center; }
+  header h1 { font-size: 20px; font-weight: 600; letter-spacing: -0.5px; }
+  .header-right { display: flex; align-items: center; gap: 12px; }
+  .status-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--red); }
+  .status-dot.ok { background: var(--accent); }
+  .api-key-input {
+    background: var(--surface); border: 1px solid var(--border); color: var(--text);
+    padding: 6px 10px; border-radius: 6px; font-size: 13px; width: 200px; font-family: var(--mono);
+  }
+  .api-key-input:focus { outline: none; border-color: var(--accent); }
+  .api-key-input.error { border-color: var(--red); animation: shake 0.25s; }
+  @keyframes shake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-4px)} 75%{transform:translateX(4px)} }
+  .layout { display: flex; height: calc(100vh - 53px); }
+  .sidebar {
+    width: 280px; min-width: 280px; border-right: 1px solid var(--border);
+    overflow-y: auto; padding: 8px;
+  }
+  .sidebar-group { margin-bottom: 4px; }
+  .sidebar-group-title {
+    font-size: 11px; font-weight: 600; text-transform: uppercase;
+    letter-spacing: 0.5px; color: var(--text2); padding: 8px 12px 4px;
+  }
+  .endpoint-btn {
+    display: flex; align-items: center; gap: 8px; width: 100%;
+    padding: 8px 12px; background: none; border: none; color: var(--text);
+    font-size: 13px; cursor: pointer; border-radius: 6px; text-align: left;
+  }
+  .endpoint-btn:hover { background: var(--surface2); }
+  .endpoint-btn.active { background: var(--surface2); color: var(--accent); }
+  .method-badge {
+    font-size: 10px; font-weight: 700; font-family: var(--mono);
+    padding: 2px 0; border-radius: 3px; width: 52px; text-align: center; flex-shrink: 0;
+  }
+  .method-badge.GET { background: #ffffff0d; color: #666; }
+  .method-badge.POST { background: #ffffff0d; color: #666; }
+  .method-badge.DELETE { background: #ffffff0d; color: #666; }
+  .main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+  .request-panel {
+    padding: 24px; border-bottom: 1px solid var(--border); flex-shrink: 0;
+  }
+  .endpoint-title { font-size: 16px; font-weight: 600; margin-bottom: 4px; }
+  .endpoint-path { font-family: var(--mono); font-size: 13px; color: var(--text2); margin-bottom: 16px; }
+  .params-grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 12px; margin-bottom: 16px;
+  }
+  .param-group label { display: block; font-size: 12px; color: var(--text2); margin-bottom: 4px; }
+  .param-group label .required { color: var(--red); }
+  .param-group input, .param-group select {
+    width: 100%; background: var(--surface); border: 1px solid var(--border); color: var(--text);
+    padding: 8px 10px; border-radius: 6px; font-size: 13px; font-family: var(--mono);
+  }
+  .param-group input:focus, .param-group select:focus { outline: none; border-color: var(--accent); }
+  .body-editor {
+    width: 100%; min-height: 120px; background: var(--surface); border: 1px solid var(--border);
+    color: var(--text); padding: 10px; border-radius: 6px; font-size: 13px;
+    font-family: var(--mono); resize: vertical; margin-bottom: 16px;
+  }
+  .body-editor:focus { outline: none; border-color: var(--accent); }
+  .send-btn {
+    background: var(--accent); color: #000; border: none; padding: 8px 24px;
+    border-radius: 6px; font-size: 14px; font-weight: 600; cursor: pointer;
+    font-family: inherit;
+  }
+  .send-btn:hover { background: var(--accent2); }
+  .send-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+  .send-btn.sell-btn { background: var(--red); }
+  .send-btn.sell-btn:hover { background: #dc2626; }
+  .response-panel { flex: 1; overflow: auto; padding: 24px; background: var(--surface); display: flex; flex-direction: column; }
+  .response-header {
+    display: flex; align-items: center; justify-content: space-between; margin-bottom: 0; flex-shrink: 0;
+  }
+  .response-header h3 { font-size: 13px; color: var(--text2); font-weight: 500; }
+  .response-meta { font-size: 12px; font-family: var(--mono); color: var(--text2); display: flex; gap: 12px; }
+  .response-meta .status-ok { color: var(--accent); }
+  .response-meta .status-err { color: var(--red); }
+  .response-tabs {
+    display: flex; gap: 0; margin: 12px 0 0; border-bottom: 1px solid var(--border); flex-shrink: 0;
+  }
+  .response-tab {
+    padding: 8px 16px; font-size: 13px; font-weight: 600; cursor: pointer;
+    background: none; border: none; color: var(--text2); border-bottom: 2px solid transparent;
+    transition: all 0.15s;
+  }
+  .response-tab:hover { color: var(--text); }
+  .response-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+  .response-tab-content { display: none; flex: 1; overflow: auto; padding-top: 16px; }
+  .response-tab-content.active { display: block; }
+  .response-body {
+    font-family: var(--mono); font-size: 13px; line-height: 1.5;
+    white-space: pre-wrap; word-break: break-word;
+  }
+  .placeholder {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 20px; height: 100%; color: var(--text2); font-size: 14px;
+  }
+  .placeholder-logo {
+    width: 140px; height: 140px; opacity: 0.51;
+  }
+  .json-key { color: #7dd3fc; }
+  .json-string { color: #86efac; }
+  .json-number { color: #fde68a; }
+  .json-bool { color: #c4b5fd; }
+  .json-null { color: #888; }
+
+  /* ── UI renderers ── */
+  .ui-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; }
+  .ui-card {
+    background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 16px;
+  }
+  .ui-card-title {
+    font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px;
+    color: var(--text2); margin-bottom: 8px; font-weight: 600;
+  }
+  .ui-card-value {
+    font-size: 24px; font-weight: 700; font-family: var(--mono); color: var(--text);
+  }
+  .ui-card-sub { font-size: 12px; font-family: var(--mono); margin-top: 4px; }
+  .ui-card-sub.up { color: var(--accent); }
+  .ui-card-sub.down { color: var(--red); }
+  .ui-card-sub.neutral { color: var(--text2); }
+  .ui-card-row {
+    display: flex; justify-content: space-between; padding: 6px 0;
+    border-bottom: 1px solid var(--border); font-size: 13px;
+  }
+  .ui-card-row:last-child { border-bottom: none; }
+  .ui-card-row .lbl { color: var(--text2); }
+  .ui-card-row .val { color: var(--text); font-family: var(--mono); }
+  .ui-chart-wrap {
+    background: var(--surface2); border: 1px solid var(--border); border-radius: 8px;
+    padding: 16px; position: relative;
+  }
+  .ui-chart-title { font-size: 13px; font-weight: 600; margin-bottom: 12px; }
+  .ui-chart-canvas { width: 100%; }
+  .ui-chart-tooltip {
+    position: absolute; background: var(--bg); border: 1px solid var(--border); border-radius: 6px;
+    padding: 8px 12px; font-size: 12px; font-family: var(--mono); pointer-events: none;
+    display: none; z-index: 5; white-space: nowrap;
+  }
+  .ui-table-wrap {
+    border: 1px solid var(--border); border-radius: 8px; overflow: hidden;
+  }
+  .ui-table {
+    width: 100%; border-collapse: collapse; font-size: 13px;
+  }
+  .ui-table th {
+    background: var(--surface2); padding: 8px 12px; text-align: left;
+    font-weight: 600; color: var(--text2); font-size: 12px; border-bottom: 1px solid var(--border);
+  }
+  .ui-table td { padding: 8px 12px; border-bottom: 1px solid var(--border); font-family: var(--mono); }
+  .ui-table tbody tr:hover { background: var(--surface2); }
+  .ui-table tbody tr:last-child td { border-bottom: none; }
+  .ui-status-badge {
+    display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px;
+    font-weight: 600; text-transform: uppercase;
+  }
+  .ui-status-badge.confirmed, .ui-status-badge.filled { background: #22c55e22; color: #22c55e; }
+  .ui-status-badge.cancelled, .ui-status-badge.failed, .ui-status-badge.rejected { background: #ef444422; color: var(--red); }
+  .ui-status-badge.queued, .ui-status-badge.pending, .ui-status-badge.unconfirmed { background: #eab30822; color: var(--yellow); }
+  .ui-empty { color: var(--text2); text-align: center; padding: 32px; font-size: 14px; }
+
+  /* --- Order form --- */
+  .order-form { display: flex; flex-direction: column; gap: 16px; }
+  .order-row {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 12px;
+  }
+  .order-field { display: flex; flex-direction: column; gap: 4px; }
+  .order-field label { font-size: 12px; color: var(--text2); }
+  .order-field label .req { color: var(--red); }
+  .order-field input, .order-field select {
+    background: var(--surface); border: 1px solid var(--border); color: var(--text);
+    padding: 8px 10px; border-radius: 6px; font-size: 13px; font-family: var(--mono);
+  }
+  .order-field input:focus, .order-field select:focus { outline: none; border-color: var(--accent); }
+  .order-field input[type="number"] { -moz-appearance: textfield; }
+  .order-field input::-webkit-inner-spin-button { -webkit-appearance: none; }
+
+  /* Side toggle */
+  .side-toggle { display: flex; border-radius: 6px; overflow: hidden; border: 1px solid var(--border); }
+  .side-toggle input { display: none; }
+  .side-toggle label {
+    flex: 1; padding: 8px 16px; text-align: center; cursor: pointer;
+    font-size: 13px; font-weight: 600; background: var(--surface);
+    color: var(--text2); transition: all 0.15s;
+  }
+  .side-toggle input[value="buy"]:checked + label { background: #22c55e22; color: #22c55e; }
+  .side-toggle input[value="sell"]:checked + label { background: #ef444422; color: var(--red); }
+  .side-toggle input[value="call"]:checked + label { background: #22c55e22; color: #22c55e; }
+  .side-toggle input[value="put"]:checked + label { background: #ef444422; color: var(--red); }
+  .side-toggle input[value="true"]:checked + label { background: #eab30822; color: var(--yellow); }
+  .side-toggle input[value="false"]:checked + label { background: #22c55e22; color: #22c55e; }
+
+  /* Symbol autocomplete */
+  .autocomplete-wrap { position: relative; }
+  .autocomplete-list {
+    position: absolute; top: 100%; left: 0; right: 0; z-index: 20;
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 0 0 6px 6px; max-height: 200px; overflow-y: auto; display: none;
+  }
+  .autocomplete-list.open { display: block; }
+  .autocomplete-item {
+    padding: 8px 10px; cursor: pointer; font-size: 13px;
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .autocomplete-item:hover, .autocomplete-item.highlighted { background: var(--border); }
+  .autocomplete-item .sym { font-weight: 600; font-family: var(--mono); }
+  .autocomplete-item .price { font-family: var(--mono); font-size: 12px; color: var(--accent); }
+  .autocomplete-spinner { padding: 8px 10px; color: var(--text2); font-size: 12px; }
+
+  /* Multi-symbol chips */
+  .chips-wrap {
+    position: relative;
+    background: var(--surface); border: 1px solid var(--border); border-radius: 6px;
+    display: flex; flex-wrap: wrap; align-items: center; gap: 4px;
+    padding: 4px 6px; min-height: 38px; cursor: text;
+  }
+  .chips-wrap:focus-within { border-color: var(--accent); }
+  .chip {
+    display: inline-flex; align-items: center; gap: 4px;
+    background: #a3e63518; border: 1px solid #a3e63544; color: var(--accent);
+    padding: 2px 4px 2px 8px; border-radius: 4px;
+    font-size: 12px; font-family: var(--mono); font-weight: 600;
+  }
+  .chip-x {
+    background: none; border: none; color: var(--text2); cursor: pointer;
+    font-size: 14px; line-height: 1; padding: 0 2px; border-radius: 2px;
+  }
+  .chip-x:hover { color: var(--red); background: #ef444422; }
+  .chips-input {
+    flex: 1; min-width: 80px; background: none; border: none; color: var(--text);
+    font-size: 13px; font-family: var(--mono); outline: none; padding: 2px 4px;
+  }
+  .chips-input::placeholder { color: var(--text2); }
+  .chips-dd {
+    position: absolute; top: 100%; left: 0; right: 0; z-index: 20;
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 0 0 6px 6px; max-height: 200px; overflow-y: auto; display: none;
+  }
+  .chips-dd.open { display: block; }
+
+  /* Quote badge */
+  .quote-badge {
+    display: none; margin-top: 8px; padding: 8px 12px;
+    background: var(--surface2); border-radius: 6px;
+    font-size: 12px; font-family: var(--mono); color: var(--text2);
+    gap: 16px; flex-wrap: wrap;
+  }
+  .quote-badge.visible { display: flex; }
+  .quote-badge span { display: flex; gap: 4px; }
+  .quote-badge .lbl { color: var(--text2); }
+  .quote-badge .val { color: var(--text); }
+
+  /* --- Options chain picker --- */
+  .chain-section { margin-top: 4px; }
+  .chain-section label { font-size: 12px; color: var(--text2); margin-bottom: 4px; display: block; }
+  .chain-controls {
+    display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; align-items: flex-end;
+  }
+  .chain-controls .order-field { min-width: 140px; }
+  .chain-table-wrap {
+    max-height: 240px; overflow-y: auto; border: 1px solid var(--border);
+    border-radius: 6px; background: var(--surface);
+  }
+  .chain-table {
+    width: 100%; border-collapse: collapse; font-size: 12px; font-family: var(--mono);
+  }
+  .chain-table th {
+    position: sticky; top: 0; background: var(--surface2); padding: 6px 10px;
+    text-align: left; font-weight: 600; color: var(--text2); border-bottom: 1px solid var(--border);
+  }
+  .chain-table td { padding: 6px 10px; border-bottom: 1px solid var(--border); }
+  .chain-table tr { cursor: pointer; }
+  .chain-table tbody tr:hover { background: var(--surface2); }
+  .chain-table tbody tr.selected { background: #a3e63515; }
+  .chain-loading { padding: 16px; text-align: center; color: var(--text2); font-size: 13px; }
+  .selected-contract {
+    display: none; margin-top: 12px; padding: 10px 12px;
+    background: var(--surface2); border-radius: 6px;
+    font-size: 12px; font-family: var(--mono); color: var(--text);
+    gap: 12px; flex-wrap: wrap; align-items: center;
+  }
+  .selected-contract.visible { display: flex; }
+  .selected-contract .tag {
+    background: var(--accent); color: #000; padding: 2px 8px; border-radius: 4px;
+    font-weight: 600; font-size: 11px;
+  }
+
+  /* Help button */
+  .help-btn {
+    width: 28px; height: 28px; border-radius: 50%; border: 1px solid var(--border);
+    background: var(--surface); color: var(--text2); font-size: 14px; font-weight: 700;
+    cursor: pointer; display: flex; align-items: center; justify-content: center;
+    transition: all 0.15s; flex-shrink: 0;
+  }
+  .help-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+  /* ── Help modal ── */
+  #helpModal {
+    display: none; position: fixed; inset: 0; z-index: 500;
+    align-items: center; justify-content: center; padding: 24px;
+  }
+  #helpModal.visible { display: flex; }
+  .help-overlay {
+    position: absolute; inset: 0; background: rgba(0,0,0,0.82);
+    backdrop-filter: blur(4px);
+  }
+  .help-box {
+    position: relative; z-index: 1; background: var(--surface);
+    border: 1px solid var(--border); border-radius: 12px;
+    width: 100%; max-width: 940px; max-height: 88vh; overflow-y: auto;
+    padding: 40px 48px;
+  }
+  .help-close {
+    position: absolute; top: 16px; right: 16px; background: none;
+    border: 1px solid var(--border); color: var(--text2); font-size: 15px;
+    cursor: pointer; padding: 3px 10px; border-radius: 6px;
+    line-height: 1.5; transition: all 0.15s; font-family: inherit;
+  }
+  .help-close:hover { border-color: var(--text2); color: var(--text); }
+  /* Help content */
+  .help-page { line-height: 1.7; }
+  .help-page h2 { font-size: 22px; font-weight: 700; margin-bottom: 6px; }
+  .help-page h3 { font-size: 14px; font-weight: 600; margin: 28px 0 8px; color: var(--accent); text-transform: uppercase; letter-spacing: 0.5px; }
+  .help-page p { font-size: 14px; color: var(--text); margin-bottom: 12px; }
+  .help-page code {
+    background: var(--surface2); padding: 2px 6px; border-radius: 4px;
+    font-family: var(--mono); font-size: 12px;
+  }
+  .help-page pre {
+    background: var(--surface2); border: 1px solid var(--border); border-radius: 6px;
+    padding: 12px 16px; margin-bottom: 16px; overflow-x: auto;
+    font-family: var(--mono); font-size: 12px; line-height: 1.6; color: var(--text);
+  }
+  .help-page ul { margin: 0 0 14px 20px; font-size: 14px; }
+  .help-page li { margin-bottom: 5px; }
+  .help-page .env-table { width: 100%; border-collapse: collapse; margin-bottom: 16px; font-size: 13px; }
+  .help-page .env-table th {
+    text-align: left; padding: 8px 12px; background: var(--surface2);
+    border-bottom: 1px solid var(--border); font-weight: 600; color: var(--text2); font-size: 11px; text-transform: uppercase; letter-spacing: 0.4px;
+  }
+  .help-page .env-table td { padding: 8px 12px; border-bottom: 1px solid var(--border); font-family: var(--mono); font-size: 12px; }
+  .help-page .env-table tr:last-child td { border-bottom: none; }
+  /* API key pill */
+  .ak-pill {
+    display: inline-flex; align-items: center; gap: 4px;
+    background: #a3e63512; border: 1px solid #a3e63530;
+    border-radius: 5px; padding: 1px 4px 1px 7px; vertical-align: middle;
+  }
+  .ak-pill code { font-family: var(--mono); font-size: 12px; color: var(--accent); background: none; padding: 0; }
+  .copy-btn {
+    background: none; border: none; color: #a3e63555; font-size: 10px; font-weight: 600;
+    cursor: pointer; padding: 1px 5px; border-radius: 3px; font-family: inherit;
+    text-transform: uppercase; letter-spacing: 0.4px; transition: all 0.15s;
+  }
+  .copy-btn:hover { background: #a3e63518; color: var(--accent); }
+  /* Arch diagram */
+  .arch-svg { width: 100%; margin: 16px 0 24px; }
+  @keyframes arch-fwd { to { stroke-dashoffset: -20; } }
+  @keyframes arch-ret { to { stroke-dashoffset: 20; } }
+  .arch-af { stroke: var(--accent); stroke-width: 1.5; stroke-dasharray: 6 4; fill: none; animation: arch-fwd 0.7s linear infinite; }
+  .arch-ar { stroke: #2e2e2e; stroke-width: 1; stroke-dasharray: 5 7; fill: none; animation: arch-ret 1.3s linear infinite; }
+
+  /* ── Setup page ── */
+  .setup-wrap {
+    min-height: 100vh; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; padding: 48px 24px;
+  }
+  .setup-logo {
+    width: 72px; height: 72px; margin-bottom: 28px; flex-shrink: 0;
+  }
+  .setup-logo img { width: 72px; height: 72px; display: block; }
+  .setup-title {
+    font-size: 38px; font-weight: 700; letter-spacing: -1.5px; color: #fff;
+    margin-bottom: 8px; text-align: center;
+  }
+  .setup-subtitle {
+    font-size: 15px; color: var(--text2); margin-bottom: 28px; text-align: center;
+  }
+  .setup-badge {
+    display: inline-flex; align-items: center; gap: 6px; padding: 5px 14px;
+    border-radius: 999px; font-size: 12px; font-weight: 500; margin-bottom: 56px;
+    background: #ef444418; color: #ef4444; letter-spacing: 0.2px;
+  }
+  .setup-badge::before {
+    content: ''; width: 6px; height: 6px; border-radius: 50%; background: currentColor;
+    flex-shrink: 0;
+  }
+  .setup-badge.ok { background: #a3e63518; color: var(--accent); }
+  .setup-steps { width: 100%; max-width: 460px; }
+  .setup-step {
+    display: flex; gap: 22px; padding: 22px 0; align-items: flex-start;
+  }
+  .step-num {
+    font-size: 10px; font-weight: 700; color: var(--accent); font-family: var(--mono);
+    letter-spacing: 1.5px; min-width: 22px; padding-top: 3px; opacity: 0.9;
+  }
+  .step-content h3 {
+    font-size: 14px; font-weight: 600; color: #fff; margin-bottom: 5px; letter-spacing: -0.2px;
+  }
+  .step-content p { font-size: 13px; color: var(--text2); line-height: 1.65; }
+  .step-content code {
+    background: #1c1c1c; padding: 2px 6px; border-radius: 4px;
+    font-family: var(--mono); font-size: 12px; color: #c8c8c8;
+  }
+  .step-content strong { color: #e5e5e5; font-weight: 600; }
+  .setup-reconnect {
+    width: 100%; max-width: 460px; padding: 22px 0; text-align: center;
+  }
+  .setup-reconnect p { font-size: 14px; color: var(--text2); line-height: 1.65; }
+
+  /* ── Onboarding modal ── */
+  #onboardModal {
+    display: none; position: fixed; inset: 0; z-index: 700;
+    align-items: center; justify-content: center; padding: 24px;
+    background: rgba(0,0,0,0.92); backdrop-filter: blur(6px);
+  }
+  #onboardModal.visible { display: flex; animation: modalFadeIn 0.4s ease; }
+  .onboard-box {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+    width: 100%; max-width: 460px; padding: 36px 40px;
+  }
+  .onboard-title { font-size: 20px; font-weight: 700; margin-bottom: 8px; letter-spacing: -0.4px; }
+  .onboard-sub { font-size: 13px; color: var(--text2); margin-bottom: 24px; line-height: 1.65; }
+  .onboard-key-wrap {
+    display: flex; align-items: center; gap: 10px;
+    background: var(--surface2); border: 1px solid var(--border); border-radius: 8px;
+    padding: 12px 14px; margin-bottom: 18px;
+  }
+  .onboard-key {
+    flex: 1; font-family: var(--mono); font-size: 14px; color: var(--accent);
+    letter-spacing: 0.3px; word-break: break-all;
+  }
+  .onboard-copy-btn {
+    background: none; border: 1px solid var(--border); color: var(--text2);
+    font-size: 11px; font-weight: 600; cursor: pointer; padding: 4px 10px;
+    border-radius: 5px; font-family: inherit; text-transform: uppercase;
+    letter-spacing: 0.4px; transition: all 0.15s; white-space: nowrap; flex-shrink: 0;
+  }
+  .onboard-copy-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .onboard-hint {
+    font-size: 12px; color: var(--text2); line-height: 1.7; margin-bottom: 24px;
+  }
+  .onboard-hint code {
+    background: var(--surface2); padding: 2px 6px; border-radius: 4px;
+    font-family: var(--mono); font-size: 11px; color: var(--text);
+  }
+  .onboard-close {
+    width: 100%; background: var(--accent); color: #000; border: none;
+    padding: 10px; border-radius: 7px; font-size: 14px; font-weight: 600;
+    cursor: pointer; font-family: inherit; transition: background 0.15s;
+  }
+  .onboard-close:hover { background: var(--accent2); }
+
+  /* ── Connected modal ── */
+  #connectedModal {
+    display: none; position: fixed; inset: 0; z-index: 1000;
+    background: rgba(0,0,0,0.95); align-items: center; justify-content: center;
+    cursor: pointer;
+  }
+  #connectedModal.visible {
+    display: flex; animation: modalFadeIn 0.4s ease;
+  }
+  @keyframes modalFadeIn { from { opacity: 0; } to { opacity: 1; } }
+  .modal-card {
+    display: flex; flex-direction: column; align-items: center;
+    gap: 0; text-align: center; pointer-events: none;
+  }
+  .modal-logo {
+    width: 72px; height: 72px; margin-bottom: 32px;
+  }
+  .modal-logo img {
+    width: 72px; height: 72px; display: block;
+    filter: invert(78%) sepia(50%) saturate(600%) hue-rotate(78deg) brightness(103%);
+  }
+  .modal-check {
+    width: 72px; height: 72px; border-radius: 50%;
+    background: #a3e63512; border: 1.5px solid #a3e63540;
+    display: flex; align-items: center; justify-content: center;
+    margin-bottom: 28px;
+  }
+  .modal-check svg { display: block; color: var(--accent); }
+  .modal-title {
+    font-size: 28px; font-weight: 700; color: var(--accent);
+    letter-spacing: -0.8px; margin-bottom: 10px; font-family: inherit;
+  }
+  .modal-sub { font-size: 13px; color: #a3e63545; }
+</style>
+</head>
+<body>
+<!-- SVG filter for exact accent-color tinting of white logos -->
+<svg width="0" height="0" style="position:absolute;overflow:hidden">
+  <defs>
+    <filter id="logo-accent" x="0" y="0" width="100%" height="100%" color-interpolation-filters="sRGB">
+      <feFlood flood-color="#a3e635" result="c"/>
+      <feComposite in="c" in2="SourceGraphic" operator="in"/>
+    </filter>
+  </defs>
+</svg>
+
+<div id="setupView" style="display:none;">
+  <div class="setup-wrap">
+    <div class="setup-logo">
+      <img src="/logo.svg" alt="Hood-link">
+    </div>
+    <h1 class="setup-title">Hood-link</h1>
+    <p class="setup-subtitle">Server is running — complete these steps to connect.</p>
+    <span id="setupStatusBadge" class="setup-badge">Waiting for extension</span>
+
+    <div id="installStepsBlock" class="setup-steps">
+      <div class="setup-step">
+        <span class="step-num">01</span>
+        <div class="step-content">
+          <h3>Open Chrome Extensions</h3>
+          <p>Go to <code>chrome://extensions/</code> and enable <strong>Developer mode</strong>.</p>
+        </div>
+      </div>
+      <div class="setup-step">
+        <span class="step-num">02</span>
+        <div class="step-content">
+          <h3>Load the Extension</h3>
+          <p>Drag the <code>extension/</code> folder into the page, or click <strong>Load unpacked</strong> and select it.</p>
+        </div>
+      </div>
+      <div class="setup-step">
+        <span class="step-num">03</span>
+        <div class="step-content">
+          <h3>Open Robinhood</h3>
+          <p>Visit <code>robinhood.com</code>, log in, and activate the Hood-link extension on that tab.</p>
+        </div>
+      </div>
+    </div>
+
+    <div id="reconnectBlock" style="display:none;" class="setup-reconnect">
+      <p>Extension detected — open a Robinhood tab in Chrome to reconnect. You’ll be redirected automatically.</p>
+    </div>
+  </div>
+</div>
+
+<div id="dashboardView">
+<header>
+  <div class="header-left" onclick="deselect()" style="cursor:pointer;">
+    <div class="logo">
+      <img src="/logo.svg" width="28" height="28" alt="Hood-link" style="display:block;transition:filter 0.2s;">
+    </div>
+    <h1 style="transition:color 0.2s;">Hood-link</h1>
+  </div>
+  <div class="header-right">
+    <div class="status-dot" id="statusDot" title="Bridge disconnected"></div>
+    <input class="api-key-input" id="apiKey" type="password" placeholder="API Key" value="" />
+    <button class="help-btn" id="helpBtn" title="Help">?</button>
+  </div>
+</header>
+
+<div class="layout">
+  <nav class="sidebar" id="sidebar"></nav>
+  <div class="main" id="main">
+    <div class="placeholder">
+      <img src="/logo.svg" class="placeholder-logo" alt="">
+      <span>Select an endpoint</span>
+    </div>
+  </div>
+</div>
+</div>
+
+<script>
+const ENDPOINTS = [
+  { group: "Status", endpoints: [
+    { id: "status", method: "GET", path: "/api/v1/status", title: "Status", desc: "Server & bridge status", params: [] }
+  ]},
+  { group: "Market", endpoints: [
+    { id: "quote", method: "GET", path: "/api/v1/market/quote/{symbol}", title: "Quote",
+      params: [{ name: "symbol", in: "path", required: true, placeholder: "AAPL" }] },
+    { id: "quotes", method: "GET", path: "/api/v1/market/quotes", title: "Quotes",
+      params: [{ name: "symbols", in: "query", required: true, type: "multi-symbol", defaults: ["AAPL", "GOOGL"] }] },
+    { id: "history", method: "GET", path: "/api/v1/market/history/{symbol}", title: "History",
+      params: [
+        { name: "symbol", in: "path", required: true, placeholder: "AAPL" },
+        { name: "interval", in: "query", type: "select", options: ["5minute","10minute","hour","day","week"], default: "day" },
+        { name: "span", in: "query", type: "select", options: ["day","week","month","3month","year","5year"], default: "year" }
+      ] },
+    { id: "fundamentals", method: "GET", path: "/api/v1/market/fundamentals/{symbol}", title: "Fundamentals",
+      params: [{ name: "symbol", in: "path", required: true, placeholder: "AAPL" }] },
+    { id: "futures-products", method: "GET", path: "/api/v1/market/futures/products", title: "Futures Products", params: [] },
+    { id: "futures-contracts", method: "GET", path: "/api/v1/market/futures/contracts", title: "Futures Contracts",
+      params: [
+        { name: "product_ids", in: "query", placeholder: "from /futures/products" },
+        { name: "contract_ids", in: "query", placeholder: "specific contract IDs" }
+      ] },
+    { id: "options-expirations", method: "GET", path: "/api/v1/market/options/expirations/{symbol}", title: "Options Expirations",
+      params: [{ name: "symbol", in: "path", required: true, placeholder: "AAPL" }] },
+    { id: "options", method: "GET", path: "/api/v1/market/options/{symbol}", title: "Options Chain", customForm: "options-chain" },
+    { id: "instruments", method: "GET", path: "/api/v1/market/instruments", title: "Instruments",
+      params: [{ name: "query", in: "query", placeholder: "Search by name..." }] }
+  ]},
+  { group: "Trading", endpoints: [
+    { id: "accounts", method: "GET", path: "/api/v1/account/accounts", title: "Accounts", params: [] },
+    { id: "portfolio", method: "GET", path: "/api/v1/account/portfolio", title: "Portfolio", params: [] },
+    { id: "positions", method: "GET", path: "/api/v1/account/positions", title: "Positions", params: [] },
+    { id: "options-positions", method: "GET", path: "/api/v1/account/options/positions", title: "Options Positions",
+      params: [{ name: "nonzero", in: "query", type: "select", options: ["true","false"], default: "true" }] },
+    { id: "watchlists", method: "GET", path: "/api/v1/account/watchlists", title: "Watchlists", params: [] },
+    { id: "list-orders", method: "GET", path: "/api/v1/trading/orders", title: "List Orders",
+      params: [{ name: "active_only", in: "query", type: "select", options: ["true","false"], default: "true" }] },
+    { id: "list-options-orders", method: "GET", path: "/api/v1/trading/options/orders", title: "List Options Orders",
+      params: [
+        { name: "account_number", in: "query", placeholder: "Filter by account" },
+        { name: "created_at_gte", in: "query", placeholder: "2025-11-20T20:09:08.497Z" },
+        { name: "state", in: "query", type: "select", options: ["", "filled", "cancelled", "open", "pending"], default: "" }
+      ] },
+    { id: "get-options-order", method: "GET", path: "/api/v1/trading/options/orders/{order_id}", title: "Get Options Order",
+      params: [{ name: "order_id", in: "path", required: true, placeholder: "order-uuid" }] },
+    { id: "place-order", method: "POST", path: "/api/v1/trading/orders", title: "Equity Order", customForm: "order" },
+    { id: "options-order", method: "POST", path: "/api/v1/trading/options/orders", title: "Options Order", customForm: "options-order" },
+    { id: "cancel-order", method: "DELETE", path: "/api/v1/trading/orders/{order_id}", title: "Cancel Order",
+      params: [{ name: "order_id", in: "path", required: true, placeholder: "order-uuid" }] },
+    { id: "cancel-options-order", method: "DELETE", path: "/api/v1/trading/options/orders/{order_id}", title: "Cancel Options Order",
+      params: [{ name: "order_id", in: "path", required: true, placeholder: "order-uuid" }] }
+  ]}
+];
+
+const sidebar = document.getElementById("sidebar");
+ENDPOINTS.forEach(group => {
+  const div = document.createElement("div");
+  div.className = "sidebar-group";
+  div.innerHTML = `<div class="sidebar-group-title">${group.group}</div>`;
+  group.endpoints.forEach(ep => {
+    const btn = document.createElement("button");
+    btn.className = "endpoint-btn";
+    btn.dataset.id = ep.id;
+    btn.innerHTML = `<span class="method-badge ${ep.method}">${ep.method}</span> ${ep.title}`;
+    btn.onclick = () => selectEndpoint(ep);
+    div.appendChild(btn);
+  });
+  sidebar.appendChild(div);
+});
+
+let activeId = null;
+let selectedQuote = null;
+
+// ── Help modal ──
+function pill(key) {
+  const k = escapeHtml(key);
+  return `<span class="ak-pill"><code>${k}</code><button class="copy-btn" onclick="copyKey(this)">copy</button></span>`;
+}
+function copyKey(btn) {
+  const key = document.getElementById("apiKey").value || "changeme";
+  navigator.clipboard.writeText(key).then(() => {
+    btn.textContent = "copied!";
+    setTimeout(() => btn.textContent = "copy", 1500);
+  }).catch(() => {
+    const ta = Object.assign(document.createElement("textarea"), {value: key});
+    document.body.appendChild(ta); ta.select(); document.execCommand("copy"); document.body.removeChild(ta);
+    btn.textContent = "copied!"; setTimeout(() => btn.textContent = "copy", 1500);
+  });
+}
+function openHelp() {
+  const key = document.getElementById("apiKey").value || "changeme";
+  const p = pill(key);
+  document.getElementById("helpContent").innerHTML = `
+  <div style="display:flex;align-items:center;gap:12px;margin-bottom:6px;">
+    <img src="/logo.svg" width="30" height="30" alt="" style="display:block;filter:url(#logo-accent);">
+    <h2 style="margin:0;">Hood-link</h2>
+  </div>
+  <p style="color:var(--text2);margin-bottom:24px;">A bridge that exposes Robinhood's private API as a clean local REST &amp; WebSocket server.</p>
+
+  <svg class="arch-svg" viewBox="0 0 840 130" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <marker id="haf" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto"><path d="M0,0.5 L5,3 L0,5.5 Z" fill="#a3e635"/></marker>
+      <marker id="har" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto"><path d="M0,0.5 L5,3 L0,5.5 Z" fill="#555"/></marker>
+    </defs>
+    <!-- Client -->
+    <rect x="8" y="35" width="148" height="52" rx="7" fill="#141414" stroke="#333" stroke-width="1.2"/>
+    <text x="82" y="56" text-anchor="middle" font-size="10" fill="#555" font-family="Inter,sans-serif">your code</text>
+    <text x="82" y="75" text-anchor="middle" font-size="12" fill="#ccc" font-weight="600" font-family="Inter,sans-serif">Client</text>
+    <!-- Hood-link Server -->
+    <rect x="206" y="35" width="178" height="52" rx="7" fill="#141414" stroke="#a3e63550" stroke-width="1.2"/>
+    <text x="295" y="56" text-anchor="middle" font-size="10" fill="#555" font-family="Inter,sans-serif">localhost:7878</text>
+    <text x="295" y="75" text-anchor="middle" font-size="12" fill="#ccc" font-weight="600" font-family="Inter,sans-serif">Hood-link Server</text>
+    <!-- Extension -->
+    <rect x="434" y="35" width="160" height="52" rx="7" fill="#141414" stroke="#333" stroke-width="1.2"/>
+    <text x="514" y="56" text-anchor="middle" font-size="10" fill="#555" font-family="Inter,sans-serif">robinhood.com</text>
+    <text x="514" y="75" text-anchor="middle" font-size="12" fill="#ccc" font-weight="600" font-family="Inter,sans-serif">Extension</text>
+    <!-- Robinhood API -->
+    <rect x="644" y="35" width="182" height="52" rx="7" fill="#141414" stroke="#333" stroke-width="1.2"/>
+    <text x="735" y="56" text-anchor="middle" font-size="10" fill="#555" font-family="Inter,sans-serif">api.robinhood.com</text>
+    <text x="735" y="75" text-anchor="middle" font-size="12" fill="#ccc" font-weight="600" font-family="Inter,sans-serif">Robinhood API</text>
+    <!-- Arrow labels (above) -->
+    <text x="183" y="27" text-anchor="middle" font-size="10" fill="#a3e63577" font-family="Inter,sans-serif">REST / WS</text>
+    <text x="411" y="27" text-anchor="middle" font-size="10" fill="#a3e63577" font-family="Inter,sans-serif">WS bridge</text>
+    <text x="621" y="27" text-anchor="middle" font-size="10" fill="#a3e63577" font-family="Inter,sans-serif">fetch()</text>
+    <!-- Forward arrows -->
+    <line x1="158" y1="61" x2="204" y2="61" class="arch-af" marker-end="url(#haf)"/>
+    <line x1="386" y1="61" x2="432" y2="61" class="arch-af" marker-end="url(#haf)"/>
+    <line x1="596" y1="61" x2="642" y2="61" class="arch-af" marker-end="url(#haf)"/>
+    <!-- Return path (response) -->
+    <text x="408" y="125" text-anchor="middle" font-size="10" fill="#444" font-family="Inter,sans-serif">response</text>
+    <path d="M 735,87 L 735,112 L 82,112 L 82,87" class="arch-ar" marker-end="url(#har)"/>
+  </svg>
+
+  <h3>Why?</h3>
+  <p>Robinhood doesn't offer a public API — but your browser has full authenticated access. Hood-link bridges that gap, turning your logged-in Chrome session into a private API you can call from anywhere on your machine.</p>
+  <ul>
+    <li><strong>Automate trades</strong> — place equity and options orders programmatically. See the <a href="https://github.com/superagenta110y/hood-link#disclaimer" target="_blank" style="color:var(--accent)">disclaimer</a> before use.</li>
+    <li><strong>Extract market data</strong> — pull quotes, history, options chains, and fundamentals into your own apps without scraping.</li>
+    <li><strong>Rapid strategy prototyping</strong> — iterate on trading ideas with real Robinhood data in a notebook or script in minutes.</li>
+  </ul>
+
+  <h3>How It Works</h3>
+  <ul>
+    <li>The <strong>Chrome extension</strong> runs on the Robinhood page and connects to this server via WebSocket.</li>
+    <li>The <strong>server</strong> receives your REST requests and forwards them to the extension over the bridge.</li>
+    <li>The extension executes <code>fetch()</code> in the page context, inheriting Robinhood's authenticated session.</li>
+    <li>Responses flow back through the bridge. No credentials are ever stored or transmitted.</li>
+  </ul>
+
+  <h3>Setup</h3>
+  <p><strong>1. Start the server</strong></p>
+  <pre>cd server
+uv sync
+uv run uvicorn hoodlink.main:app --host 127.0.0.1 --port 7878</pre>
+  <p><strong>2. Load the extension</strong> — open <code>chrome://extensions/</code>, enable Developer mode, click <strong>Load unpacked</strong>, select the <code>extension/</code> folder.</p>
+  <p><strong>3. Connect</strong> — open <a href="https://robinhood.com" target="_blank" style="color:var(--accent)">robinhood.com</a>, log in, and activate the extension. The status dot above will turn green.</p>
+
+  <h3>API Key</h3>
+  <p>Your current key: ${p}</p>
+  <p>Set via <code>HOODLINK_API_KEY</code> env var or the input in the top-right corner of this page.</p>
+  <pre>curl -H "X-API-Key: ${escapeHtml(key)}" http://localhost:7878/api/v1/market/quote/AAPL</pre>
+  <pre>HOODLINK_API_KEY=my-secret-key uv run uvicorn hoodlink.main:app</pre>
+
+  <h3>Configuration</h3>
+  <table class="env-table">
+    <tr><th>Variable</th><th>Default</th><th>Description</th></tr>
+    <tr><td>HOODLINK_API_KEY</td><td>changeme</td><td>API authentication key</td></tr>
+    <tr><td>HOODLINK_HOST</td><td>127.0.0.1</td><td>Server bind address</td></tr>
+    <tr><td>HOODLINK_PORT</td><td>7878</td><td>Server port</td></tr>
+    <tr><td>HOODLINK_BRIDGE_TIMEOUT</td><td>10.0</td><td>Seconds to wait for extension response</td></tr>
+    <tr><td>HOODLINK_LOG_LEVEL</td><td>info</td><td>Logging verbosity</td></tr>
+  </table>
+
+  <h3>REST API Examples</h3>
+  <pre># Quote
+curl -H "X-API-Key: ${escapeHtml(key)}" http://localhost:7878/api/v1/market/quote/AAPL
+
+# History
+curl -H "X-API-Key: ${escapeHtml(key)}" "http://localhost:7878/api/v1/market/history/AAPL?interval=day&amp;span=year"
+
+# Options chain
+curl -H "X-API-Key: ${escapeHtml(key)}" "http://localhost:7878/api/v1/market/options/AAPL?expiration_dates=2026-03-20&amp;type=call"
+
+# Place order
+curl -X POST -H "X-API-Key: ${escapeHtml(key)}" -H "Content-Type: application/json" \\
+  http://localhost:7878/api/v1/trading/orders \\
+  -d '{"symbol":"AAPL","side":"buy","quantity":1,"type":"limit","price":150.00}'</pre>
+
+  <h3>WebSocket Streaming</h3>
+  <p>Connect to <code>ws://localhost:7878/ws?api_key=${escapeHtml(key)}</code> for real-time streaming.</p>
+
+  <h3>Security Notes</h3>
+  <ul>
+    <li>Server binds to <code>127.0.0.1</code> by default — local machine only</li>
+    <li>Change the default API key before exposing to any network</li>
+    <li>Never expose this server to the public internet</li>
+  </ul>
+
+  <div style="margin-top:32px;padding-top:20px;border-top:1px solid var(--border);">
+    <a href="https://github.com/superagenta110y/hood-link" target="_blank" style="display:inline-flex;align-items:center;gap:7px;color:#555;text-decoration:none;font-size:13px;transition:color 0.15s;" onmouseover="this.style.color='#888'" onmouseout="this.style.color='#555'">
+      <svg width="16" height="16" viewBox="0 0 98 96" xmlns="http://www.w3.org/2000/svg" style="flex-shrink:0;fill:currentColor"><path fill-rule="evenodd" clip-rule="evenodd" d="M48.854 0C21.839 0 0 22 0 49.217c0 21.756 13.993 40.172 33.405 46.69 2.427.49 3.316-1.059 3.316-2.362 0-1.141-.08-5.052-.08-9.127-13.59 2.934-16.42-5.867-16.42-5.867-2.184-5.704-5.42-7.17-5.42-7.17-4.448-3.015.324-3.015.324-3.015 4.934.326 7.523 5.052 7.523 5.052 4.367 7.496 11.404 5.378 14.235 4.074.404-3.178 1.699-5.378 3.074-6.6-10.839-1.141-22.243-5.378-22.243-24.283 0-5.378 1.94-9.778 5.014-13.2-.485-1.222-2.184-6.275.486-13.038 0 0 4.125-1.304 13.426 5.052a46.97 46.97 0 0 1 12.214-1.63c4.125 0 8.33.571 12.213 1.63 9.302-6.356 13.427-5.052 13.427-5.052 2.67 6.763.97 11.816.485 13.038 3.155 3.422 5.015 7.822 5.015 13.2 0 18.905-11.404 23.06-22.324 24.283 1.78 1.548 3.316 4.481 3.316 9.126 0 6.6-.08 11.897-.08 13.526 0 1.304.89 2.853 3.316 2.364 19.412-6.52 33.405-24.935 33.405-46.691C97.707 22 75.788 0 48.854 0z"/></svg>
+      hood-link
+</a>
+  </div>`;
+  document.getElementById("helpModal").classList.add("visible");
+}
+function closeHelp() {
+  document.getElementById("helpModal").classList.remove("visible");
+}
+document.getElementById("helpBtn").onclick = openHelp;
+document.addEventListener("keydown", e => { if (e.key === "Escape") closeHelp(); });
+
+function deselect() {
+  activeId = null;
+  selectedQuote = null;
+  document.querySelectorAll(".endpoint-btn").forEach(b => b.classList.remove("active"));
+  document.getElementById("main").innerHTML = `<div class="placeholder">
+    <img src="/logo.svg" class="placeholder-logo" alt="">
+    <span>Select an endpoint</span>
+  </div>`;
+  history.replaceState(null, "", "/");
+  setHeaderAccent(true);
+}
+
+function setHeaderAccent(on) {
+  const logo = document.querySelector("header .logo img");
+  const title = document.querySelector("header h1");
+  // on=true → no endpoint selected → logo+title in accent color
+  // on=false → endpoint selected → logo+title in default white
+  if (logo) logo.style.filter = on ? "url(#logo-accent)" : "";
+  if (title) title.style.color = on ? "var(--accent)" : "";
+}
+
+function selectEndpoint(ep) {
+  if (activeId === ep.id) { deselect(); return; }
+  activeId = ep.id;
+  selectedQuote = null;
+  document.querySelectorAll(".endpoint-btn").forEach(b =>
+    b.classList.toggle("active", b.dataset.id === ep.id));
+  history.replaceState(null, "", "/#" + ep.id);
+  setHeaderAccent(false);
+  const main = document.getElementById("main");
+
+  if (ep.customForm === "order") { renderOrderForm(main, ep); return; }
+  if (ep.customForm === "options-order") { renderOptionsOrderForm(main, ep); return; }
+  if (ep.customForm === "options-chain") { renderOptionsChainForm(main, ep); return; }
+
+  const params = ep.params || [];
+  let paramsHTML = "";
+  if (params.length) {
+    paramsHTML = `<div class="params-grid">${params.map(p => {
+      if (p.type === "select") {
+        const opts = p.options.map(o => `<option value="${o}" ${o===p.default?"selected":""}>${o||(p.in==="query"?"(any)":"")}</option>`).join("");
+        return `<div class="param-group"><label>${p.name}${p.required?' <span class="required">*</span>':""}</label><select data-param="${p.name}" data-in="${p.in}">${opts}</select></div>`;
+      }
+      if (p.type === "multi-symbol") {
+        const defs = p.defaults ? escapeHtml(JSON.stringify(p.defaults)) : "";
+        return `<div class="param-group" style="grid-column:1/-1;max-width:500px;">
+          <label>${p.name}${p.required?' <span class="required">*</span>':""}</label>
+          <div class="chips-wrap" data-multi-sym="true" ${defs ? 'data-defaults="'+defs+'"' : ""}>
+            <input class="chips-input" data-chips-input="true" placeholder="Type symbol and press Enter..." autocomplete="off" />
+            <div class="chips-dd" data-chips-dd="true"></div>
+          </div>
+          <input type="hidden" data-param="${p.name}" data-in="${p.in}" data-chips-value="true" />
+        </div>`;
+      }
+      if (p.name === "symbol") {
+        return `<div class="param-group"><label>${p.name}${p.required?' <span class="required">*</span>':""}</label><div class="autocomplete-wrap"><input data-param="${p.name}" data-in="${p.in}" data-sym-ac="true" value="AAPL" autocomplete="off" /><div class="autocomplete-list" data-sym-dd="true"></div></div></div>`;
+      }
+      return `<div class="param-group"><label>${p.name}${p.required?' <span class="required">*</span>':""}</label><input data-param="${p.name}" data-in="${p.in}" placeholder="${p.placeholder||""}" ${p.default_value ? 'value="'+p.default_value+'"' : ""} /></div>`;
+    }).join("")}</div>`;
+  }
+  let bodyHTML = "";
+  if (ep.body) bodyHTML = `<textarea class="body-editor" id="bodyEditor">${JSON.stringify(ep.body,null,2)}</textarea>`;
+
+  main.innerHTML = `
+    <div class="request-panel">
+      <div class="endpoint-title">${ep.title}</div>
+      <div class="endpoint-path">${ep.method} ${ep.path}</div>
+      ${paramsHTML}${bodyHTML}
+      <button class="send-btn" id="sendBtn" onclick="sendRequest()">Send Request</button>
+    </div>
+    <div class="response-panel" id="responsePanel"><div class="placeholder">Response will appear here</div></div>`;
+
+  // Wire up autocomplete on all symbol fields using DOM refs directly
+  main.querySelectorAll("[data-sym-ac]").forEach(inp => {
+    const dd = inp.parentElement.querySelector("[data-sym-dd]");
+    wireSymbolAutocomplete(inp, dd);
+  });
+
+  // Wire up multi-symbol chips
+  main.querySelectorAll("[data-multi-sym]").forEach(wrap => {
+    const inp = wrap.querySelector("[data-chips-input]");
+    const dd = wrap.querySelector("[data-chips-dd]");
+    const hidden = wrap.parentElement.querySelector("[data-chips-value]");
+    wireMultiSymbolAutocomplete(wrap, inp, dd, hidden);
+  });
+}
+
+/* ── helpers ── */
+function apiHeaders() { return { "X-API-Key": document.getElementById("apiKey").value, "Content-Type": "application/json" }; }
+function requireKey() {
+  const input = document.getElementById("apiKey");
+  if (input.value.trim()) return true;
+  input.classList.remove("error");
+  void input.offsetWidth; // reflow to restart animation
+  input.classList.add("error");
+  input.focus();
+  showResponse(null, "API key required — check the terminal where Hood-link is running, then enter it above.", 0, 0);
+  return false;
+}
+function $(id) { return document.getElementById(id); }
+function escapeHtml(s) { return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+
+function fmtPrice(v) { return v ? "$" + parseFloat(v).toFixed(2) : "—"; }
+
+function wireSymbolAutocomplete(inp, dd, onPick) {
+  if (!inp || !dd) return;
+  let timer = null, hlIdx = -1;
+
+  function hl(items) { items.forEach((it,i) => it.classList.toggle("highlighted", i===hlIdx)); }
+
+  async function doSearch(q) {
+    dd.innerHTML = '<div class="autocomplete-spinner">Searching...</div>';
+    dd.classList.add("open");
+    try {
+      const res = await fetch(`/api/v1/market/quote/${encodeURIComponent(q)}`, { headers: apiHeaders() });
+      if (!res.ok) throw 0;
+      const data = await res.json();
+      const sym = data.symbol || q;
+      dd.innerHTML = "";
+      const item = document.createElement("div");
+      item.className = "autocomplete-item";
+      item.innerHTML = `<span class="sym">${escapeHtml(sym)}</span><span class="price">${fmtPrice(data.last_trade_price)}</span>`;
+      item.onclick = () => { inp.value = sym; dd.classList.remove("open"); if (onPick) onPick(sym, data); };
+      dd.appendChild(item);
+      hlIdx = 0; hl(dd.querySelectorAll(".autocomplete-item"));
+    } catch { dd.innerHTML = '<div class="autocomplete-spinner">No results</div>'; }
+  }
+
+  inp.addEventListener("input", () => {
+    const q = inp.value.trim().toUpperCase();
+    clearTimeout(timer); hlIdx = -1;
+    if (q.length < 1) { dd.classList.remove("open"); return; }
+    timer = setTimeout(() => doSearch(q), 250);
+  });
+
+  inp.addEventListener("focus", () => {
+    const q = inp.value.trim().toUpperCase();
+    if (q.length >= 1) { clearTimeout(timer); timer = setTimeout(() => doSearch(q), 150); }
+  });
+
+  inp.addEventListener("keydown", (e) => {
+    const items = dd.querySelectorAll(".autocomplete-item");
+    if (e.key === "ArrowDown" && items.length) { e.preventDefault(); hlIdx = Math.min(hlIdx+1, items.length-1); hl(items); }
+    else if (e.key === "ArrowUp" && items.length) { e.preventDefault(); hlIdx = Math.max(hlIdx-1, 0); hl(items); }
+    else if (e.key === "Enter") {
+      if (hlIdx >= 0 && items[hlIdx]) { e.preventDefault(); items[hlIdx].click(); }
+    }
+    else if (e.key === "Escape") { dd.classList.remove("open"); }
+  });
+
+  inp.addEventListener("blur", () => { setTimeout(() => dd.classList.remove("open"), 200); });
+}
+
+// Wrapper for order forms that use IDs
+function initSymbolAutocomplete(inputId, dropdownId, onPick) {
+  wireSymbolAutocomplete($(inputId), $(dropdownId), onPick);
+}
+
+/* ── Multi-symbol chips autocomplete ── */
+function wireMultiSymbolAutocomplete(wrap, inp, dd, hidden) {
+  if (!wrap || !inp || !dd || !hidden) return;
+  let timer = null, hlIdx = -1;
+  const symbols = [];
+
+  function syncHidden() {
+    hidden.value = symbols.join(",");
+  }
+
+  function addChip(sym) {
+    sym = sym.toUpperCase().trim();
+    if (!sym || symbols.includes(sym)) return;
+    symbols.push(sym);
+    const chip = document.createElement("span");
+    chip.className = "chip";
+    chip.dataset.sym = sym;
+    chip.innerHTML = `${escapeHtml(sym)}<button class="chip-x" type="button">&times;</button>`;
+    chip.querySelector(".chip-x").onclick = (e) => {
+      e.stopPropagation();
+      const idx = symbols.indexOf(sym);
+      if (idx !== -1) symbols.splice(idx, 1);
+      chip.remove();
+      syncHidden();
+    };
+    wrap.insertBefore(chip, inp);
+    syncHidden();
+    inp.value = "";
+    dd.classList.remove("open");
+  }
+
+  function hl(items) { items.forEach((it, i) => it.classList.toggle("highlighted", i === hlIdx)); }
+
+  async function doSearch(q) {
+    dd.innerHTML = '<div class="autocomplete-spinner">Searching...</div>';
+    dd.classList.add("open");
+    try {
+      const res = await fetch(`/api/v1/market/quote/${encodeURIComponent(q)}`, { headers: apiHeaders() });
+      if (!res.ok) throw 0;
+      const data = await res.json();
+      const sym = data.symbol || q;
+      dd.innerHTML = "";
+      if (symbols.includes(sym.toUpperCase())) {
+        dd.innerHTML = '<div class="autocomplete-spinner">Already added</div>';
+        return;
+      }
+      const item = document.createElement("div");
+      item.className = "autocomplete-item";
+      item.innerHTML = `<span class="sym">${escapeHtml(sym)}</span><span class="price">${fmtPrice(data.last_trade_price)}</span>`;
+      item.onclick = () => addChip(sym);
+      dd.appendChild(item);
+      hlIdx = 0; hl(dd.querySelectorAll(".autocomplete-item"));
+    } catch { dd.innerHTML = '<div class="autocomplete-spinner">No results</div>'; }
+  }
+
+  inp.addEventListener("input", () => {
+    const q = inp.value.trim().toUpperCase();
+    clearTimeout(timer); hlIdx = -1;
+    if (q.length < 1) { dd.classList.remove("open"); return; }
+    timer = setTimeout(() => doSearch(q), 250);
+  });
+
+  inp.addEventListener("focus", () => {
+    const q = inp.value.trim().toUpperCase();
+    if (q.length >= 1) { clearTimeout(timer); timer = setTimeout(() => doSearch(q), 150); }
+  });
+
+  inp.addEventListener("keydown", (e) => {
+    const items = dd.querySelectorAll(".autocomplete-item");
+    if (e.key === "ArrowDown" && items.length) { e.preventDefault(); hlIdx = Math.min(hlIdx + 1, items.length - 1); hl(items); }
+    else if (e.key === "ArrowUp" && items.length) { e.preventDefault(); hlIdx = Math.max(hlIdx - 1, 0); hl(items); }
+    else if (e.key === "Enter") {
+      e.preventDefault();
+      if (hlIdx >= 0 && items[hlIdx]) { items[hlIdx].click(); }
+      else {
+        const q = inp.value.trim().toUpperCase();
+        if (q) addChip(q);
+      }
+    }
+    else if (e.key === "Backspace" && !inp.value && symbols.length) {
+      // Remove last chip on backspace in empty input
+      const last = symbols.pop();
+      const lastChip = wrap.querySelector(`.chip[data-sym="${last}"]`);
+      if (lastChip) lastChip.remove();
+      syncHidden();
+    }
+    else if (e.key === "Escape") { dd.classList.remove("open"); }
+  });
+
+  inp.addEventListener("blur", () => { setTimeout(() => dd.classList.remove("open"), 200); });
+
+  // Click on wrap focuses input
+  wrap.addEventListener("click", () => inp.focus());
+
+  // Seed default chips
+  const defaults = wrap.dataset.defaults;
+  if (defaults) {
+    try { JSON.parse(defaults).forEach(s => addChip(s)); } catch {}
+  }
+}
+
+/* ── Options Chain Form ── */
+
+let chainViewState = { symbol: null };
+
+function renderOptionsChainForm(container, ep) {
+  chainViewState = { symbol: null };
+  container.innerHTML = `
+    <div class="request-panel">
+      <div class="endpoint-title">${ep.title}</div>
+      <div class="endpoint-path">${ep.method} ${ep.path}</div>
+      <div class="order-form">
+        <div class="order-row">
+          <div class="order-field" style="max-width:300px;">
+            <label>Symbol <span class="req">*</span></label>
+            <div class="autocomplete-wrap">
+              <input type="text" id="oc-symbol" placeholder="Search symbol..." autocomplete="off" />
+              <div class="autocomplete-list" id="ocSymbolDropdown"></div>
+            </div>
+          </div>
+          <div class="order-field" id="ocExpField" style="display:none;max-width:200px;">
+            <label>Expiration</label>
+            <select id="oc-expiration"></select>
+          </div>
+        </div>
+        <div class="chain-loading" id="ocLoading" style="display:none;"></div>
+        <button class="send-btn" id="ocSendBtn" onclick="fetchOptionsChainData()" style="align-self:flex-start;">Send Request</button>
+      </div>
+    </div>
+    <div class="response-panel" id="responsePanel"><div class="placeholder">Response will appear here</div></div>`;
+
+  initSymbolAutocomplete("oc-symbol", "ocSymbolDropdown", async (sym) => {
+    chainViewState.symbol = sym;
+    $("ocLoading").style.display = "";
+    $("ocLoading").textContent = "Loading expirations...";
+    try {
+      const res = await fetch(`/api/v1/market/options/expirations/${encodeURIComponent(sym)}`, { headers: apiHeaders() });
+      if (!res.ok) throw new Error("Failed to load expirations");
+      const data = await res.json();
+      const exps = (data.expiration_dates || []).sort();
+      const sel = $("oc-expiration");
+      sel.innerHTML = exps.map(d => `<option value="${d}">${d}</option>`).join("");
+      $("ocLoading").style.display = "none";
+      if (exps.length) {
+        $("ocExpField").style.display = "";
+      } else {
+        $("ocExpField").style.display = "none";
+        $("ocLoading").style.display = "";
+        $("ocLoading").textContent = "No options found for this symbol";
+      }
+    } catch (err) {
+      $("ocLoading").style.display = "";
+      $("ocLoading").textContent = "Error: " + err.message;
+    }
+  });
+}
+
+async function fetchOptionsChainData() {
+  if (!requireKey()) return;
+  const symbol = chainViewState.symbol || $("oc-symbol").value.trim().toUpperCase();
+  const exp = $("oc-expiration").value;
+  if (!symbol) { showResponse(null, "Symbol is required", 0, 0); return; }
+
+  const btn = $("ocSendBtn"); btn.disabled = true; btn.textContent = "Sending...";
+  const t0 = performance.now();
+  try {
+    let url = `/api/v1/market/options/${encodeURIComponent(symbol)}`;
+    if (exp) url += `?expiration_dates=${exp}`;
+    const res = await fetch(url, { headers: apiHeaders() });
+    const ms = Math.round(performance.now() - t0);
+    let data; try { data = await res.json(); } catch { data = await res.text(); }
+    showResponse(data, null, res.status, ms);
+  } catch (err) {
+    showResponse(null, err.message, 0, Math.round(performance.now() - t0));
+  }
+  btn.disabled = false; btn.textContent = "Send Request";
+}
+
+/* ── Equity Order Form ── */
+
+function renderOrderForm(container, ep) {
+  container.innerHTML = `
+    <div class="request-panel">
+      <div class="endpoint-title">${ep.title}</div>
+      <div class="endpoint-path">${ep.method} ${ep.path}</div>
+      <div class="order-form">
+        <div class="order-row">
+          <div class="order-field" style="grid-column:1/-1;max-width:400px;">
+            <label>Symbol <span class="req">*</span></label>
+            <div class="autocomplete-wrap">
+              <input type="text" id="of-symbol" placeholder="Search symbol..." autocomplete="off" />
+              <div class="autocomplete-list" id="symbolDropdown"></div>
+            </div>
+            <div class="quote-badge" id="quoteBadge">
+              <span><span class="lbl">Last</span> <span class="val" id="qLast">—</span></span>
+              <span><span class="lbl">Bid</span> <span class="val" id="qBid">—</span></span>
+              <span><span class="lbl">Ask</span> <span class="val" id="qAsk">—</span></span>
+              <span><span class="lbl">Prev Close</span> <span class="val" id="qPrev">—</span></span>
+            </div>
+          </div>
+        </div>
+        <div id="orderFields" style="display:none;flex-direction:column;gap:16px">
+        <div class="order-row">
+          <div class="order-field">
+            <label>Side <span class="req">*</span></label>
+            <div class="side-toggle">
+              <input type="radio" name="of-side" id="side-buy" value="buy" checked /><label for="side-buy">Buy</label>
+              <input type="radio" name="of-side" id="side-sell" value="sell" /><label for="side-sell">Sell</label>
+            </div>
+          </div>
+          <div class="order-field">
+            <label>Quantity <span class="req">*</span></label>
+            <input type="number" id="of-quantity" min="0" step="1" value="1" />
+          </div>
+        </div>
+        <div class="order-row">
+          <div class="order-field">
+            <label>Order Type</label>
+            <select id="of-type"><option value="limit" selected>Limit</option><option value="market">Market</option></select>
+          </div>
+          <div class="order-field" id="priceField">
+            <label>Price <span class="req">*</span></label>
+            <input type="number" id="of-price" min="0" step="0.01" placeholder="0.00" />
+          </div>
+          <div class="order-field">
+            <label>Stop Price</label>
+            <input type="number" id="of-stop" min="0" step="0.01" placeholder="Optional" />
+          </div>
+        </div>
+        <div class="order-row">
+          <div class="order-field">
+            <label>Time in Force</label>
+            <select id="of-tif"><option value="gfd" selected>Day (GFD)</option><option value="gtc">Good Till Cancelled</option><option value="ioc">Immediate or Cancel</option><option value="opg">At Open</option></select>
+          </div>
+          <div class="order-field">
+            <label>Market Hours</label>
+            <select id="of-hours"><option value="all_day_hours" selected>All Day (Pre + After)</option><option value="regular_hours">Regular Hours Only</option></select>
+          </div>
+          <div class="order-field">
+            <label>Position Effect</label>
+            <select id="of-effect"><option value="open" selected>Open</option><option value="close">Close</option></select>
+          </div>
+        </div>
+        <button class="send-btn" id="sendBtn" style="width:auto;align-self:flex-start" onclick="submitEquityOrder()">Send Request</button>
+        </div>
+      </div>
+    </div>
+    <div class="response-panel" id="responsePanel"><div class="placeholder">Response will appear here</div></div>`;
+
+  initSymbolAutocomplete("of-symbol", "symbolDropdown", (sym, data) => {
+    selectedQuote = data;
+    $("qLast").textContent = fmtPrice(data.last_trade_price);
+    $("qBid").textContent = fmtPrice(data.bid_price);
+    $("qAsk").textContent = fmtPrice(data.ask_price);
+    $("qPrev").textContent = fmtPrice(data.previous_close);
+    $("quoteBadge").classList.add("visible");
+    $("orderFields").style.display = "flex";
+    if (data.last_trade_price && $("of-type").value === "limit")
+      $("of-price").value = parseFloat(data.last_trade_price).toFixed(2);
+  });
+
+  const sendBtn = $("sendBtn");
+  document.querySelectorAll('input[name="of-side"]').forEach(r => r.addEventListener("change", () => {
+    const s = document.querySelector('input[name="of-side"]:checked').value;
+    sendBtn.classList.toggle("sell-btn", s === "sell");
+  }));
+  $("of-type").addEventListener("change", () => {
+    $("priceField").style.display = $("of-type").value === "market" ? "none" : "";
+  });
+}
+
+async function submitEquityOrder() {
+  if (!requireKey()) return;
+  const btn = $("sendBtn"); btn.disabled = true; const orig = btn.textContent; btn.textContent = "Placing...";
+  const symbol = $("of-symbol").value.trim().toUpperCase();
+  const side = document.querySelector('input[name="of-side"]:checked').value;
+  const quantity = parseFloat($("of-quantity").value);
+  const type = $("of-type").value;
+  if (!symbol) { showResponse(null,"Symbol is required",0,0); btn.disabled=false; btn.textContent=orig; return; }
+  if (!quantity||quantity<=0) { showResponse(null,"Quantity must be > 0",0,0); btn.disabled=false; btn.textContent=orig; return; }
+  const body = { symbol, side, quantity, type, time_in_force: $("of-tif").value, market_hours: $("of-hours").value, position_effect: $("of-effect").value };
+  if (type === "limit") {
+    const p = parseFloat($("of-price").value);
+    if (!p||p<=0) { showResponse(null,"Price required for limit orders",0,0); btn.disabled=false; btn.textContent=orig; return; }
+    body.price = p;
+  }
+  const sv = $("of-stop").value;
+  if (sv && parseFloat(sv)>0) body.stop_price = parseFloat(sv);
+  const t0 = performance.now();
+  try {
+    const res = await fetch("/api/v1/trading/orders", { method:"POST", headers:apiHeaders(), body:JSON.stringify(body) });
+    const ms = Math.round(performance.now()-t0);
+    let data; try { data = await res.json(); } catch { data = await res.text(); }
+    showResponse(data, null, res.status, ms);
+  } catch(err) { showResponse(null, err.message, 0, Math.round(performance.now()-t0)); }
+  btn.disabled=false; btn.textContent=orig;
+}
+
+/* ── Options Order Form ── */
+
+let optionsState = { chainData: null, selectedContract: null };
+
+function renderOptionsOrderForm(container, ep) {
+  optionsState = { chainData: null, selectedContract: null };
+  container.innerHTML = `
+    <div class="request-panel">
+      <div class="endpoint-title">${ep.title}</div>
+      <div class="endpoint-path">${ep.method} ${ep.path}</div>
+      <div class="order-form">
+
+        <!-- Symbol -->
+        <div class="order-row">
+          <div class="order-field" style="grid-column:1/-1;max-width:400px;">
+            <label>Underlying Symbol <span class="req">*</span></label>
+            <div class="autocomplete-wrap">
+              <input type="text" id="oo-symbol" placeholder="Search symbol..." autocomplete="off" />
+              <div class="autocomplete-list" id="ooSymbolDropdown"></div>
+            </div>
+            <div class="quote-badge" id="ooQuoteBadge">
+              <span><span class="lbl">Last</span> <span class="val" id="ooqLast">—</span></span>
+              <span><span class="lbl">Bid</span> <span class="val" id="ooqBid">—</span></span>
+              <span><span class="lbl">Ask</span> <span class="val" id="ooqAsk">—</span></span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Chain browser -->
+        <div class="chain-section" id="chainSection" style="display:none;">
+          <label>Select Contract <span class="req" style="color:var(--red)">*</span></label>
+          <div class="chain-controls">
+            <div class="order-field">
+              <label>Expiration</label>
+              <select id="oo-expiration"></select>
+            </div>
+            <div class="order-field">
+              <label>Type</label>
+              <div class="side-toggle">
+                <input type="radio" name="oo-opttype" id="oo-call" value="call" checked /><label for="oo-call">Call</label>
+                <input type="radio" name="oo-opttype" id="oo-put" value="put" /><label for="oo-put">Put</label>
+              </div>
+            </div>
+          </div>
+          <div class="chain-table-wrap">
+            <div class="chain-loading" id="chainLoading">Select a symbol to load the options chain</div>
+            <table class="chain-table" id="chainTable" style="display:none;">
+              <thead><tr><th>Strike</th><th>Bid</th><th>Ask</th><th>Volume</th><th>OI</th><th>IV</th></tr></thead>
+              <tbody id="chainBody"></tbody>
+            </table>
+          </div>
+          <div class="selected-contract" id="selectedContract">
+            <span class="tag">SELECTED</span>
+            <span id="contractDesc">—</span>
+          </div>
+        </div>
+
+        <!-- Order params -->
+        <div class="order-row" id="ooOrderParams" style="display:none;">
+          <div class="order-field">
+            <label>Side <span class="req">*</span></label>
+            <div class="side-toggle">
+              <input type="radio" name="oo-side" id="oo-side-buy" value="buy" checked /><label for="oo-side-buy">Buy</label>
+              <input type="radio" name="oo-side" id="oo-side-sell" value="sell" /><label for="oo-side-sell">Sell</label>
+            </div>
+          </div>
+          <div class="order-field">
+            <label>Contracts <span class="req">*</span></label>
+            <input type="number" id="oo-quantity" min="1" step="1" value="1" />
+          </div>
+          <div class="order-field">
+            <label>Direction</label>
+            <select id="oo-direction"><option value="debit" selected>Debit</option><option value="credit">Credit</option></select>
+          </div>
+        </div>
+        <div class="order-row" id="ooOrderParams2" style="display:none;">
+          <div class="order-field">
+            <label>Order Type</label>
+            <select id="oo-type"><option value="limit" selected>Limit</option><option value="market">Market</option></select>
+          </div>
+          <div class="order-field" id="ooPriceField">
+            <label>Price (per contract) <span class="req">*</span></label>
+            <input type="number" id="oo-price" min="0" step="0.01" placeholder="0.01" />
+          </div>
+          <div class="order-field">
+            <label>Time in Force</label>
+            <select id="oo-tif"><option value="gfd" selected>Day (GFD)</option><option value="gtc">Good Till Cancelled</option></select>
+          </div>
+          <div class="order-field">
+            <label>Position Effect</label>
+            <select id="oo-effect"><option value="open" selected>Open</option><option value="close">Close</option></select>
+          </div>
+        </div>
+
+        <div class="order-row" id="ooOrderParams3" style="display:none;">
+          <div class="order-field">
+            <label>Override Day Trade Checks</label>
+            <div class="side-toggle">
+              <input type="radio" name="oo-daytrade" id="oo-dt-no" value="false" checked /><label for="oo-dt-no">No</label>
+              <input type="radio" name="oo-daytrade" id="oo-dt-yes" value="true" /><label for="oo-dt-yes">Yes</label>
+            </div>
+          </div>
+          <div class="order-field">
+            <label>Override No Bid Price</label>
+            <div class="side-toggle">
+              <input type="radio" name="oo-nobid" id="oo-nb-no" value="false" checked /><label for="oo-nb-no">No</label>
+              <input type="radio" name="oo-nobid" id="oo-nb-yes" value="true" /><label for="oo-nb-yes">Yes</label>
+            </div>
+          </div>
+        </div>
+
+        <button class="send-btn" id="ooSendBtn" onclick="submitOptionsOrder()" style="display:none;width:auto;align-self:flex-start">Send Request</button>
+      </div>
+    </div>
+    <div class="response-panel" id="responsePanel"><div class="placeholder">Response will appear here</div></div>`;
+
+  initOptionsOrderForm();
+}
+
+function initOptionsOrderForm() {
+  initSymbolAutocomplete("oo-symbol", "ooSymbolDropdown", async (sym, data) => {
+    $("ooqLast").textContent = fmtPrice(data.last_trade_price);
+    $("ooqBid").textContent = fmtPrice(data.bid_price);
+    $("ooqAsk").textContent = fmtPrice(data.ask_price);
+    $("ooQuoteBadge").classList.add("visible");
+    await loadOptionsChain(sym);
+  });
+
+  // Side toggle updates button
+  document.querySelectorAll('input[name="oo-side"]').forEach(r => r.addEventListener("change", updateOOBtn));
+  $("oo-type").addEventListener("change", () => {
+    $("ooPriceField").style.display = $("oo-type").value === "market" ? "none" : "";
+  });
+
+  // Expiration / type change reloads chain
+  $("oo-expiration").addEventListener("change", () => filterChain());
+  document.querySelectorAll('input[name="oo-opttype"]').forEach(r => r.addEventListener("change", () => filterChain()));
+}
+
+function updateOOBtn() {
+  const s = document.querySelector('input[name="oo-side"]:checked').value;
+  const btn = $("ooSendBtn");
+  btn.classList.toggle("sell-btn", s === "sell");
+}
+
+async function loadOptionsChain(symbol) {
+  $("chainSection").style.display = "";
+  $("chainLoading").style.display = "";
+  $("chainLoading").textContent = "Loading options chain...";
+  $("chainTable").style.display = "none";
+  $("selectedContract").classList.remove("visible");
+  $("ooOrderParams").style.display = "none";
+  $("ooOrderParams2").style.display = "none";
+  $("ooOrderParams3").style.display = "none";
+  $("ooSendBtn").style.display = "none";
+  optionsState.selectedContract = null;
+  optionsState.chainData = [];
+  optionsState.symbol = symbol;
+
+  try {
+    // Step 1: Fetch expiration dates via dedicated endpoint
+    const res = await fetch(`/api/v1/market/options/expirations/${encodeURIComponent(symbol)}`, { headers: apiHeaders() });
+    if (!res.ok) throw new Error("Failed to load expirations");
+    const data = await res.json();
+
+    const expirations = (data.expiration_dates || []).sort();
+    const expSelect = $("oo-expiration");
+    expSelect.innerHTML = expirations.map(d => `<option value="${d}">${d}</option>`).join("");
+
+    if (expirations.length) {
+      // Step 2: Fetch instruments for the first expiration + selected type
+      await filterChain();
+    } else {
+      $("chainLoading").textContent = "No options found for this symbol";
+    }
+  } catch (err) {
+    $("chainLoading").textContent = "Error: " + err.message;
+  }
+}
+
+async function filterChain() {
+  const exp = $("oo-expiration").value;
+  const optType = document.querySelector('input[name="oo-opttype"]:checked').value;
+  const symbol = optionsState.symbol;
+
+  if (!exp || !symbol) return;
+
+  // Show loading state
+  $("chainLoading").style.display = "";
+  $("chainLoading").textContent = "Loading contracts...";
+  $("chainTable").style.display = "none";
+  $("selectedContract").classList.remove("visible");
+  $("ooOrderParams").style.display = "none";
+  $("ooOrderParams2").style.display = "none";
+  $("ooOrderParams3").style.display = "none";
+  $("ooSendBtn").style.display = "none";
+  optionsState.selectedContract = null;
+
+  try {
+    // Fetch instruments for this specific expiration + type (server handles pagination)
+    const url = `/api/v1/market/options/${encodeURIComponent(symbol)}?expiration_dates=${exp}&type=${optType}`;
+    const res = await fetch(url, { headers: apiHeaders() });
+    if (!res.ok) throw new Error("Failed to load contracts");
+    const data = await res.json();
+
+    const instruments = data.results || [];
+    optionsState.chainData = instruments;
+
+    const filtered = instruments.sort((a, b) => parseFloat(a.strike_price) - parseFloat(b.strike_price));
+
+    const tbody = $("chainBody");
+    if (!filtered.length) {
+      $("chainLoading").textContent = "No contracts for this expiration/type";
+      return;
+    }
+
+    $("chainLoading").style.display = "none";
+    $("chainTable").style.display = "";
+    tbody.innerHTML = filtered.map((c, i) => {
+      const strike = parseFloat(c.strike_price).toFixed(2);
+      const bid = c.bid_price ? "$" + parseFloat(c.bid_price).toFixed(2) : "—";
+      const ask = c.ask_price ? "$" + parseFloat(c.ask_price).toFixed(2) : "—";
+      const vol = c.volume != null ? parseInt(c.volume).toLocaleString() : "—";
+      const oi = c.open_interest != null ? parseInt(c.open_interest).toLocaleString() : "—";
+      const iv = c.implied_volatility ? (parseFloat(c.implied_volatility) * 100).toFixed(1) + "%" : "—";
+      return `<tr data-idx="${i}" data-url="${c.url || ''}" data-strike="${strike}" data-exp="${c.expiration_date}" data-type="${c.type}">
+        <td>$${strike}</td><td>${bid}</td><td>${ask}</td><td>${vol}</td><td>${oi}</td><td>${iv}</td></tr>`;
+    }).join("");
+
+    // Click to select
+    tbody.querySelectorAll("tr").forEach(tr => {
+      tr.onclick = () => selectContract(tr, filtered[parseInt(tr.dataset.idx)]);
+    });
+  } catch (err) {
+    $("chainLoading").textContent = "Error: " + err.message;
+  }
+}
+
+function selectContract(tr, contract) {
+  // Highlight row
+  $("chainBody").querySelectorAll("tr").forEach(r => r.classList.remove("selected"));
+  tr.classList.add("selected");
+
+  const strike = tr.dataset.strike;
+  const exp = tr.dataset.exp;
+  const type = tr.dataset.type;
+  const url = tr.dataset.url;
+
+  optionsState.selectedContract = { ...contract, url };
+
+  // Show selected badge
+  const desc = `${$("oo-symbol").value.toUpperCase()} ${exp} $${strike} ${type.toUpperCase()}`;
+  $("contractDesc").textContent = desc;
+  $("selectedContract").classList.add("visible");
+
+  // Show order params
+  $("ooOrderParams").style.display = "";
+  $("ooOrderParams2").style.display = "";
+  $("ooOrderParams3").style.display = "";
+  $("ooSendBtn").style.display = "";
+  updateOOBtn();
+
+  // Auto-fill price from market data (now stitched into the contract object by the server)
+  const side = document.querySelector('input[name="oo-side"]:checked').value;
+  const fillPrice = side === "buy" ? contract.ask_price : contract.bid_price;
+  if (fillPrice && $("oo-type").value === "limit") {
+    $("oo-price").value = parseFloat(fillPrice).toFixed(2);
+  }
+}
+
+async function submitOptionsOrder() {
+  if (!requireKey()) return;
+  const btn = $("ooSendBtn"); btn.disabled = true; const orig = btn.textContent; btn.textContent = "Placing...";
+
+  if (!optionsState.selectedContract || !optionsState.selectedContract.url) {
+    showResponse(null, "Select an options contract first", 0, 0);
+    btn.disabled = false; btn.textContent = orig; return;
+  }
+
+  const side = document.querySelector('input[name="oo-side"]:checked').value;
+  const quantity = parseInt($("oo-quantity").value);
+  const type = $("oo-type").value;
+  const direction = $("oo-direction").value;
+  const tif = $("oo-tif").value;
+  const effect = $("oo-effect").value;
+
+  if (!quantity || quantity <= 0) {
+    showResponse(null, "Quantity must be > 0", 0, 0);
+    btn.disabled = false; btn.textContent = orig; return;
+  }
+
+  const overrideDayTrade = document.querySelector('input[name="oo-daytrade"]:checked').value === "true";
+  const overrideNoBid = document.querySelector('input[name="oo-nobid"]:checked').value === "true";
+
+  const body = {
+    option_url: optionsState.selectedContract.url,
+    side, quantity, type, direction,
+    time_in_force: tif,
+    position_effect: effect,
+    override_day_trade_checks: overrideDayTrade,
+    override_no_bid_price: overrideNoBid,
+  };
+
+  if (type === "limit") {
+    const p = parseFloat($("oo-price").value);
+    if (!p || p <= 0) {
+      showResponse(null, "Price required for limit orders", 0, 0);
+      btn.disabled = false; btn.textContent = orig; return;
+    }
+    body.price = p;
+  }
+
+  const t0 = performance.now();
+  try {
+    const res = await fetch("/api/v1/trading/options/orders", { method: "POST", headers: apiHeaders(), body: JSON.stringify(body) });
+    const ms = Math.round(performance.now() - t0);
+    let data; try { data = await res.json(); } catch { data = await res.text(); }
+    showResponse(data, null, res.status, ms);
+  } catch (err) { showResponse(null, err.message, 0, Math.round(performance.now() - t0)); }
+
+  btn.disabled = false; btn.textContent = orig;
+}
+
+/* ── Generic request ── */
+
+async function sendRequest() {
+  if (!requireKey()) return;
+  const ep = ENDPOINTS.flatMap(g => g.endpoints).find(e => e.id === activeId);
+  if (!ep) return;
+  const btn = $("sendBtn"); btn.disabled = true; btn.textContent = "Sending...";
+  let url = ep.path;
+  const qp = new URLSearchParams();
+  document.querySelectorAll("[data-param]").forEach(el => {
+    const val = el.value.trim();
+    if (!val) return;
+    if (el.dataset.in === "path") url = url.replace(`{${el.dataset.param}}`, encodeURIComponent(val));
+    else if (el.dataset.in === "query") qp.set(el.dataset.param, val);
+  });
+  const qs = qp.toString();
+  if (qs) url += "?" + qs;
+  const opts = { method: ep.method, headers: apiHeaders() };
+  if (ep.body) {
+    const editor = $("bodyEditor");
+    try { opts.body = editor.value; JSON.parse(opts.body); }
+    catch { showResponse(null,"Invalid JSON body",0,0); btn.disabled=false; btn.textContent="Send Request"; return; }
+  }
+  const t0 = performance.now();
+  try {
+    const res = await fetch(url, opts);
+    const ms = Math.round(performance.now()-t0);
+    let data; try { data = await res.json(); } catch { data = await res.text(); }
+    showResponse(data, null, res.status, ms);
+  } catch(err) { showResponse(null, err.message, 0, Math.round(performance.now()-t0)); }
+  btn.disabled=false; btn.textContent="Send Request";
+}
+
+/* ── Response ── */
+
+function showResponse(data, error, status, ms) {
+  const panel = $("responsePanel");
+  const sc = (status>=200&&status<300) ? "status-ok" : "status-err";
+  const st = error ? `<span class="status-err">Error</span>` : `<span class="${sc}">${status}</span>`;
+
+  if (error) {
+    panel.innerHTML = `<div class="response-header"><h3>Response</h3><div class="response-meta">${st}<span>${ms}ms</span></div></div>
+      <div class="response-body" style="margin-top:12px;">${escapeHtml(error)}</div>`;
+    return;
+  }
+
+  const hasUI = !!getUIRenderer(activeId);
+  panel.innerHTML = `
+    <div class="response-header"><h3>Response</h3><div class="response-meta">${st}<span>${ms}ms</span></div></div>
+    <div class="response-tabs">
+      ${hasUI ? '<button class="response-tab active" data-tab="ui">UI</button>' : ''}
+      <button class="response-tab ${hasUI ? '' : 'active'}" data-tab="json">JSON</button>
+    </div>
+    <div class="response-tab-content ${hasUI ? '' : 'active'}" data-tab-content="json">
+      <div class="response-body">${syntaxHighlight(data)}</div>
+    </div>
+    ${hasUI ? '<div class="response-tab-content active" data-tab-content="ui"></div>' : ''}`;
+
+  // Tab switching
+  panel.querySelectorAll(".response-tab").forEach(tab => {
+    tab.onclick = () => {
+      panel.querySelectorAll(".response-tab").forEach(t => t.classList.remove("active"));
+      panel.querySelectorAll(".response-tab-content").forEach(c => c.classList.remove("active"));
+      tab.classList.add("active");
+      panel.querySelector(`[data-tab-content="${tab.dataset.tab}"]`).classList.add("active");
+    };
+  });
+
+  // Render UI tab
+  if (hasUI) {
+    const uiContainer = panel.querySelector('[data-tab-content="ui"]');
+    try { renderUITab(activeId, data, uiContainer); }
+    catch (e) { uiContainer.innerHTML = `<div class="ui-empty">Could not render UI: ${escapeHtml(e.message)}</div>`; }
+  }
+}
+
+function syntaxHighlight(obj) {
+  const json = JSON.stringify(obj, null, 2);
+  if (!json) return "";
+  return json.replace(/("(\\u[\da-fA-F]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g,
+    m => {
+      let c = "json-number";
+      if (/^"/.test(m)) c = /:$/.test(m) ? "json-key" : "json-string";
+      else if (/true|false/.test(m)) c = "json-bool";
+      else if (/null/.test(m)) c = "json-null";
+      return `<span class="${c}">${escapeHtml(m)}</span>`;
+    });
+}
+
+/* ── UI Renderers ── */
+
+function getUIRenderer(id) {
+  return UI_RENDERERS[id] || null;
+}
+
+function renderUITab(id, data, container) {
+  const renderer = UI_RENDERERS[id];
+  if (renderer) renderer(data, container);
+}
+
+function pctChange(cur, prev) {
+  if (!cur || !prev) return null;
+  return ((parseFloat(cur) - parseFloat(prev)) / parseFloat(prev) * 100);
+}
+
+function changeClass(pct) {
+  if (pct === null) return "neutral";
+  return pct >= 0 ? "up" : "down";
+}
+
+function changeFmt(pct) {
+  if (pct === null) return "—";
+  return (pct >= 0 ? "+" : "") + pct.toFixed(2) + "%";
+}
+
+const UI_RENDERERS = {
+
+  /* ── Quote ── */
+  quote(data, el) {
+    if (!data || !data.symbol) { el.innerHTML = '<div class="ui-empty">No quote data</div>'; return; }
+    const price = parseFloat(data.last_trade_price);
+    const prev = parseFloat(data.previous_close);
+    const pct = pctChange(data.last_trade_price, data.previous_close);
+    const chg = price - prev;
+    el.innerHTML = `
+      <div class="ui-cards">
+        <div class="ui-card" style="grid-column: 1/-1; max-width: 320px;">
+          <div class="ui-card-title">${escapeHtml(data.symbol)}</div>
+          <div class="ui-card-value">${fmtPrice(data.last_trade_price)}</div>
+          <div class="ui-card-sub ${changeClass(pct)}">
+            ${isNaN(chg) ? "" : (chg >= 0 ? "+" : "") + chg.toFixed(2)} (${changeFmt(pct)})
+          </div>
+        </div>
+        <div class="ui-card">
+          <div class="ui-card-row"><span class="lbl">Bid</span><span class="val">${fmtPrice(data.bid_price)}${data.bid_size ? ' x' + data.bid_size : ''}</span></div>
+          <div class="ui-card-row"><span class="lbl">Ask</span><span class="val">${fmtPrice(data.ask_price)}${data.ask_size ? ' x' + data.ask_size : ''}</span></div>
+          <div class="ui-card-row"><span class="lbl">Prev Close</span><span class="val">${fmtPrice(data.previous_close)}</span></div>
+        </div>
+        <div class="ui-card">
+          <div class="ui-card-row"><span class="lbl">Spread</span><span class="val">${data.bid_price && data.ask_price ? "$" + (parseFloat(data.ask_price) - parseFloat(data.bid_price)).toFixed(2) : "—"}</span></div>
+          <div class="ui-card-row"><span class="lbl">Updated</span><span class="val">${data.updated_at ? new Date(data.updated_at).toLocaleTimeString() : "—"}</span></div>
+        </div>
+      </div>`;
+  },
+
+  /* ── Quotes (multi) ── */
+  quotes(data, el) {
+    const results = data?.results || (Array.isArray(data) ? data : []);
+    if (!results.length) { el.innerHTML = '<div class="ui-empty">No quotes</div>'; return; }
+    el.innerHTML = `<div class="ui-cards">${results.map(q => {
+      const pct = pctChange(q.last_trade_price, q.previous_close);
+      const price = parseFloat(q.last_trade_price);
+      const prev = parseFloat(q.previous_close);
+      const chg = price - prev;
+      return `<div class="ui-card">
+        <div class="ui-card-title">${escapeHtml(q.symbol || "?")}</div>
+        <div class="ui-card-value">${fmtPrice(q.last_trade_price)}</div>
+        <div class="ui-card-sub ${changeClass(pct)}">
+          ${isNaN(chg) ? "" : (chg >= 0 ? "+" : "") + chg.toFixed(2)} (${changeFmt(pct)})
+        </div>
+        <div style="margin-top:8px;">
+          <div class="ui-card-row"><span class="lbl">Bid</span><span class="val">${fmtPrice(q.bid_price)}</span></div>
+          <div class="ui-card-row"><span class="lbl">Ask</span><span class="val">${fmtPrice(q.ask_price)}</span></div>
+        </div>
+      </div>`;
+    }).join("")}</div>`;
+  },
+
+  /* ── History (chart) ── */
+  history(data, el) {
+    const bars = data?.historicals || [];
+    if (!bars.length) { el.innerHTML = '<div class="ui-empty">No historical data</div>'; return; }
+    const symbol = data.symbol || "";
+    el.innerHTML = `
+      <div class="ui-chart-wrap">
+        <div class="ui-chart-title">${escapeHtml(symbol)} &mdash; ${escapeHtml(data.interval || "")} / ${escapeHtml(data.span || "")}</div>
+        <canvas class="ui-chart-canvas" id="historyCanvas"></canvas>
+        <div class="ui-chart-tooltip" id="chartTooltip"></div>
+      </div>`;
+    requestAnimationFrame(() => drawChart(bars, $("historyCanvas"), $("chartTooltip")));
+  },
+
+  /* ── Fundamentals ── */
+  fundamentals(data, el) {
+    if (!data) { el.innerHTML = '<div class="ui-empty">No data</div>'; return; }
+    const rows = [
+      ["Market Cap", data.market_cap ? "$" + (parseFloat(data.market_cap) / 1e9).toFixed(2) + "B" : null],
+      ["P/E Ratio", data.pe_ratio],
+      ["Dividend Yield", data.dividend_yield ? (parseFloat(data.dividend_yield) * 100).toFixed(2) + "%" : null],
+      ["High", fmtPrice(data.high)],
+      ["Low", fmtPrice(data.low)],
+      ["Open", fmtPrice(data.open)],
+      ["Volume", data.volume ? parseInt(data.volume).toLocaleString() : null],
+    ].filter(r => r[1] && r[1] !== "—");
+    el.innerHTML = `
+      <div class="ui-cards">
+        <div class="ui-card" style="max-width:360px;">
+          <div class="ui-card-title">${escapeHtml(data.symbol || "Fundamentals")}</div>
+          ${rows.map(([l, v]) => `<div class="ui-card-row"><span class="lbl">${l}</span><span class="val">${escapeHtml(String(v))}</span></div>`).join("")}
+        </div>
+        ${data.description ? `<div class="ui-card" style="grid-column:1/-1;"><div class="ui-card-title">Description</div><div style="font-size:13px;line-height:1.6;color:var(--text2);">${escapeHtml(data.description)}</div></div>` : ""}
+      </div>`;
+  },
+
+  /* ── Positions ── */
+  positions(data, el) {
+    const results = data?.results || (Array.isArray(data) ? data : []);
+    if (!results.length) { el.innerHTML = '<div class="ui-empty">No positions</div>'; return; }
+    el.innerHTML = `<div class="ui-table-wrap"><table class="ui-table">
+      <thead><tr><th>Symbol</th><th>Qty</th><th>Avg Cost</th><th>Instrument</th></tr></thead>
+      <tbody>${results.map(p => {
+        const sym = p.symbol || "—";
+        const qty = parseFloat(p.quantity || 0);
+        if (qty === 0) return "";
+        return `<tr>
+          <td style="font-weight:600;">${escapeHtml(sym)}</td>
+          <td>${qty}</td>
+          <td>${fmtPrice(p.average_buy_price)}</td>
+          <td style="color:var(--text2);font-size:11px;max-width:200px;overflow:hidden;text-overflow:ellipsis;">${escapeHtml(p.instrument || "")}</td>
+        </tr>`;
+      }).join("")}</tbody></table></div>`;
+  },
+
+  /* ── Options Positions ── */
+  "options-positions"(data, el) {
+    const results = data?.results || (Array.isArray(data) ? data : []);
+    if (!results.length) { el.innerHTML = '<div class="ui-empty">No options positions</div>'; return; }
+    el.innerHTML = `<div class="ui-table-wrap"><table class="ui-table">
+      <thead><tr><th>Symbol</th><th>Strategy</th><th>Qty</th><th>Avg Open</th><th>Direction</th><th>Type</th></tr></thead>
+      <tbody>${results.map(p => `<tr>
+          <td style="font-weight:600;">${escapeHtml(p.symbol || p.chain_symbol || "—")}</td>
+          <td>${escapeHtml(p.strategy || "—")}</td>
+          <td>${escapeHtml(String(p.quantity || p.trade_value_multiplier || "—"))}</td>
+          <td>${fmtPrice(p.average_open_price)}</td>
+          <td>${escapeHtml(p.direction || "—")}</td>
+          <td>${escapeHtml(p.type || "—")}</td>
+        </tr>`).join("")}</tbody></table></div>`;
+  },
+
+  /* ── Portfolio ── */
+  portfolio(data, el) {
+    if (!data) { el.innerHTML = '<div class="ui-empty">No portfolio data</div>'; return; }
+    const equity = parseFloat(data.equity || data.market_value || 0);
+    const mktVal = data.market_value || data.equity;
+    el.innerHTML = `
+      <div class="ui-cards">
+        <div class="ui-card">
+          <div class="ui-card-title">Total Equity</div>
+          <div class="ui-card-value">$${equity.toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2})}</div>
+        </div>
+        ${mktVal && mktVal !== data.equity ? `<div class="ui-card"><div class="ui-card-title">Market Value</div><div class="ui-card-value">${fmtPrice(mktVal)}</div></div>` : ""}
+        ${data.excess_margin ? `<div class="ui-card"><div class="ui-card-title">Excess Margin</div><div class="ui-card-value">${fmtPrice(data.excess_margin)}</div></div>` : ""}
+        ${data.last_core_equity ? `<div class="ui-card"><div class="ui-card-title">Core Equity</div><div class="ui-card-value">${fmtPrice(data.last_core_equity)}</div></div>` : ""}
+      </div>`;
+  },
+
+  /* ── Orders ── */
+  "list-orders"(data, el) {
+    const results = data?.results || (Array.isArray(data) ? data : []);
+    if (!results.length) { el.innerHTML = '<div class="ui-empty">No orders</div>'; return; }
+    el.innerHTML = `<div class="ui-table-wrap"><table class="ui-table">
+      <thead><tr><th>Symbol</th><th>Side</th><th>Qty</th><th>Type</th><th>Price</th><th>State</th><th>Created</th></tr></thead>
+      <tbody>${results.slice(0, 50).map(o => {
+        const st = (o.state || "").toLowerCase();
+        return `<tr>
+          <td style="font-weight:600;">${escapeHtml(o.symbol || "—")}</td>
+          <td style="color:${o.side==="buy" ? "var(--accent)" : "var(--red)"};">${escapeHtml(o.side || "—")}</td>
+          <td>${escapeHtml(o.quantity || "—")}</td>
+          <td>${escapeHtml(o.type || "—")}</td>
+          <td>${fmtPrice(o.price)}</td>
+          <td><span class="ui-status-badge ${escapeHtml(st)}">${escapeHtml(o.state || "—")}</span></td>
+          <td style="font-size:11px;color:var(--text2);">${o.created_at ? new Date(o.created_at).toLocaleString() : "—"}</td>
+        </tr>`;
+      }).join("")}</tbody></table></div>`;
+  },
+
+  /* ── Options Orders ── */
+  "list-options-orders"(data, el) {
+    const results = data?.results || (Array.isArray(data) ? data : []);
+    if (!results.length) { el.innerHTML = '<div class="ui-empty">No options orders</div>'; return; }
+    el.innerHTML = `<div class="ui-table-wrap"><table class="ui-table">
+      <thead><tr><th>Symbol</th><th>Strategy</th><th>Direction</th><th>Qty</th><th>Price</th><th>Stop</th><th>State</th><th>Legs</th><th>Created</th></tr></thead>
+      <tbody>${results.slice(0, 50).map(o => {
+        const st = (o.state || o.derived_state || "").toLowerCase();
+        const legs = o.legs || [];
+        const legsDesc = legs.map(leg => {
+          const strike = leg.strike_price ? `$${parseFloat(leg.strike_price).toFixed(2)}` : "";
+          const type = leg.option_type ? leg.option_type[0].toUpperCase() : "";
+          const side = leg.side === "buy" ? "B" : "S";
+          return strike && type ? `${side}${type}${strike}` : side;
+        }).join(", ");
+        return `<tr>
+          <td style="font-weight:600;">${escapeHtml(o.chain_symbol || "—")}</td>
+          <td style="font-size:11px;">${escapeHtml(o.strategy || o.opening_strategy || o.closing_strategy || "—")}</td>
+          <td style="color:${o.direction==="debit" ? "var(--red)" : "var(--accent)"};">${escapeHtml(o.direction || "—")}</td>
+          <td>${escapeHtml(o.quantity || "—")}</td>
+          <td>${fmtPrice(o.price)}</td>
+          <td>${o.stop_price ? fmtPrice(o.stop_price) : "—"}</td>
+          <td><span class="ui-status-badge ${escapeHtml(st)}">${escapeHtml(o.state || o.derived_state || "—")}</span></td>
+          <td style="font-size:11px;color:var(--text2);">${escapeHtml(legsDesc || "—")}</td>
+          <td style="font-size:11px;color:var(--text2);">${o.created_at ? new Date(o.created_at).toLocaleString() : "—"}</td>
+        </tr>`;
+      }).join("")}</tbody></table></div>`;
+  },
+
+  /* ── Single Options Order ── */
+  "get-options-order"(data, el) {
+    if (!data || !data.id) { el.innerHTML = '<div class="ui-empty">No order data</div>'; return; }
+    const legs = data.legs || [];
+    const executions = legs.flatMap(leg => leg.executions || []);
+    
+    el.innerHTML = `
+      <div class="ui-cards">
+        <div class="ui-card">
+          <div class="ui-card-title">Order ${escapeHtml(data.id.substring(0, 8))}...</div>
+          <div class="ui-card-row"><span class="lbl">Symbol</span><span class="val">${escapeHtml(data.chain_symbol || "—")}</span></div>
+          <div class="ui-card-row"><span class="lbl">Strategy</span><span class="val">${escapeHtml(data.strategy || "—")}</span></div>
+          <div class="ui-card-row"><span class="lbl">State</span><span class="val"><span class="ui-status-badge ${escapeHtml((data.state || "").toLowerCase())}">${escapeHtml(data.state || "—")}</span></span></div>
+          <div class="ui-card-row"><span class="lbl">Direction</span><span class="val" style="color:${data.direction==="debit" ? "var(--red)" : "var(--accent)"};">${escapeHtml(data.direction || "—")}</span></div>
+          <div class="ui-card-row"><span class="lbl">Quantity</span><span class="val">${escapeHtml(data.quantity || "—")}</span></div>
+          <div class="ui-card-row"><span class="lbl">Price</span><span class="val">${fmtPrice(data.price)}</span></div>
+          ${data.stop_price ? `<div class="ui-card-row"><span class="lbl">Stop Price</span><span class="val">${fmtPrice(data.stop_price)}</span></div>` : ""}
+          <div class="ui-card-row"><span class="lbl">Premium</span><span class="val">${fmtPrice(data.premium)}</span></div>
+          <div class="ui-card-row"><span class="lbl">Net Amount</span><span class="val">${fmtPrice(data.net_amount)} ${escapeHtml(data.net_amount_direction || "")}</span></div>
+          <div class="ui-card-row"><span class="lbl">Type</span><span class="val">${escapeHtml(data.type || "—")} / ${escapeHtml(data.trigger || "—")}</span></div>
+          <div class="ui-card-row"><span class="lbl">TIF</span><span class="val">${escapeHtml(data.time_in_force || "—")}</span></div>
+          <div class="ui-card-row"><span class="lbl">Created</span><span class="val">${data.created_at ? new Date(data.created_at).toLocaleString() : "—"}</span></div>
+          <div class="ui-card-row"><span class="lbl">Updated</span><span class="val">${data.updated_at ? new Date(data.updated_at).toLocaleString() : "—"}</span></div>
+        </div>
+      </div>
+      ${legs.length ? `<div style="margin-top:16px;"><h4 style="font-size:14px;font-weight:600;margin-bottom:8px;">Legs</h4>
+        <div class="ui-table-wrap"><table class="ui-table">
+          <thead><tr><th>Side</th><th>Type</th><th>Strike</th><th>Expiration</th><th>Position Effect</th><th>Executions</th></tr></thead>
+          <tbody>${legs.map(leg => `<tr>
+            <td style="color:${leg.side==="buy" ? "var(--accent)" : "var(--red)"};">${escapeHtml(leg.side || "—")}</td>
+            <td>${escapeHtml(leg.option_type || "—")}</td>
+            <td>${fmtPrice(leg.strike_price)}</td>
+            <td>${escapeHtml(leg.expiration_date || "—")}</td>
+            <td>${escapeHtml(leg.position_effect || "—")}</td>
+            <td>${(leg.executions || []).length}</td>
+          </tr>`).join("")}</tbody>
+        </table></div>
+      </div>` : ""}
+      ${executions.length ? `<div style="margin-top:16px;"><h4 style="font-size:14px;font-weight:600;margin-bottom:8px;">Executions</h4>
+        <div class="ui-table-wrap"><table class="ui-table">
+          <thead><tr><th>Quantity</th><th>Price</th><th>Settlement Date</th><th>Timestamp</th></tr></thead>
+          <tbody>${executions.map(ex => `<tr>
+            <td>${escapeHtml(ex.quantity || "—")}</td>
+            <td>${fmtPrice(ex.price)}</td>
+            <td>${escapeHtml(ex.settlement_date || "—")}</td>
+            <td style="font-size:11px;color:var(--text2);">${ex.timestamp ? new Date(ex.timestamp).toLocaleString() : "—"}</td>
+          </tr>`).join("")}</tbody>
+        </table></div>
+      </div>` : ""}`;
+  },
+
+  /* ── Accounts ── */
+  accounts(data, el) {
+    const results = data?.results || (Array.isArray(data) ? data : []);
+    if (!results.length) { el.innerHTML = '<div class="ui-empty">No accounts</div>'; return; }
+    el.innerHTML = `<div class="ui-cards">${results.map(a => `<div class="ui-card">
+      <div class="ui-card-title">Account ${escapeHtml(a.account_number || "")}</div>
+      <div class="ui-card-row"><span class="lbl">Type</span><span class="val">${escapeHtml(a.type || a.brokerage_account_type || "—")}</span></div>
+      <div class="ui-card-row"><span class="lbl">Buying Power</span><span class="val">${fmtPrice(a.buying_power)}</span></div>
+      <div class="ui-card-row"><span class="lbl">Cash</span><span class="val">${fmtPrice(a.cash)}</span></div>
+      <div class="ui-card-row"><span class="lbl">Portfolio Cash</span><span class="val">${fmtPrice(a.portfolio_cash)}</span></div>
+    </div>`).join("")}</div>`;
+  },
+
+  /* ── Status ── */
+  status(data, el) {
+    if (!data) return;
+    const connected = data.bridge_connected;
+    el.innerHTML = `
+      <div class="ui-cards">
+        <div class="ui-card" style="max-width:280px;">
+          <div class="ui-card-title">Bridge</div>
+          <div class="ui-card-value" style="font-size:18px;color:${connected ? "var(--accent)" : "var(--red)"};">
+            ${connected ? "Connected" : "Disconnected"}
+          </div>
+        </div>
+        <div class="ui-card" style="max-width:280px;">
+          <div class="ui-card-title">Server</div>
+          <div class="ui-card-value" style="font-size:18px;color:var(--accent);">Running</div>
+          <div class="ui-card-sub neutral">${escapeHtml(data.status || "")}</div>
+        </div>
+      </div>`;
+  },
+
+  /* ── Watchlists ── */
+  watchlists(data, el) {
+    const results = data?.results || (Array.isArray(data) ? data : []);
+    if (!results.length) { el.innerHTML = '<div class="ui-empty">No watchlists</div>'; return; }
+    el.innerHTML = `<div class="ui-cards">${results.map(w => `<div class="ui-card">
+      <div class="ui-card-title">${escapeHtml(w.name || w.display_name || "Watchlist")}</div>
+      <div class="ui-card-row"><span class="lbl">Items</span><span class="val">${w.items?.length || "—"}</span></div>
+    </div>`).join("")}</div>`;
+  },
+
+  /* ── Options Chain ── */
+  options(data, el) {
+    const results = data?.results || (Array.isArray(data) ? data : []);
+    if (!results.length && data?.expiration_dates?.length) {
+      el.innerHTML = `<div class="ui-card" style="max-width:400px;"><div class="ui-card-title">Expirations Available</div>
+        ${data.expiration_dates.slice(0, 20).map(d => `<div class="ui-card-row"><span class="val">${escapeHtml(d)}</span></div>`).join("")}
+        ${data.expiration_dates.length > 20 ? `<div class="ui-card-sub neutral">+ ${data.expiration_dates.length - 20} more</div>` : ""}
+      </div>`;
+      return;
+    }
+    if (!results.length) { el.innerHTML = '<div class="ui-empty">No options data</div>'; return; }
+
+    // Split into calls and puts, sorted by strike
+    const calls = results.filter(o => o.type === "call").sort((a, b) => parseFloat(a.strike_price) - parseFloat(b.strike_price));
+    const puts = results.filter(o => o.type === "put").sort((a, b) => parseFloat(a.strike_price) - parseFloat(b.strike_price));
+    // Build strike-keyed map
+    const strikes = [...new Set(results.map(o => o.strike_price))].sort((a, b) => parseFloat(a) - parseFloat(b));
+    const callMap = {}; calls.forEach(c => callMap[c.strike_price] = c);
+    const putMap = {}; puts.forEach(p => putMap[p.strike_price] = p);
+
+    function fmtOpt(v) { return v != null && v !== "" ? "$" + parseFloat(v).toFixed(2) : "—"; }
+    function fmtIV(v) { return v != null && v !== "" ? (parseFloat(v) * 100).toFixed(1) + "%" : "—"; }
+    function fmtVol(v) { return v != null && v !== "" ? parseInt(v).toLocaleString() : "—"; }
+    function fmtDelta(v) { return v != null && v !== "" ? parseFloat(v).toFixed(3) : "—"; }
+
+    el.innerHTML = `<div class="ui-table-wrap" style="overflow-x:auto;"><table class="ui-table" style="font-size:12px;">
+      <thead><tr>
+        <th colspan="6" style="text-align:center;color:var(--accent);border-right:2px solid var(--border);">CALLS</th>
+        <th style="text-align:center;">Strike</th>
+        <th colspan="6" style="text-align:center;color:var(--red);border-left:2px solid var(--border);">PUTS</th>
+      </tr><tr>
+        <th>Bid</th><th>Ask</th><th>Mark</th><th>Vol</th><th>OI</th><th style="border-right:2px solid var(--border);">IV</th>
+        <th style="text-align:center;font-weight:700;"></th>
+        <th style="border-left:2px solid var(--border);">Bid</th><th>Ask</th><th>Mark</th><th>Vol</th><th>OI</th><th>IV</th>
+      </tr></thead>
+      <tbody>${strikes.map(s => {
+        const c = callMap[s] || {};
+        const p = putMap[s] || {};
+        return `<tr>
+          <td>${fmtOpt(c.bid_price)}</td>
+          <td>${fmtOpt(c.ask_price)}</td>
+          <td>${fmtOpt(c.mark_price)}</td>
+          <td>${fmtVol(c.volume)}</td>
+          <td>${fmtVol(c.open_interest)}</td>
+          <td style="border-right:2px solid var(--border);">${fmtIV(c.implied_volatility)}</td>
+          <td style="text-align:center;font-weight:700;">$${parseFloat(s).toFixed(2)}</td>
+          <td style="border-left:2px solid var(--border);">${fmtOpt(p.bid_price)}</td>
+          <td>${fmtOpt(p.ask_price)}</td>
+          <td>${fmtOpt(p.mark_price)}</td>
+          <td>${fmtVol(p.volume)}</td>
+          <td>${fmtVol(p.open_interest)}</td>
+          <td>${fmtIV(p.implied_volatility)}</td>
+        </tr>`;
+      }).join("")}</tbody></table></div>`;
+  },
+
+  /* ── Options Expirations ── */
+  "options-expirations"(data, el) {
+    const exps = data?.expiration_dates || [];
+    if (!exps.length) { el.innerHTML = '<div class="ui-empty">No expirations found</div>'; return; }
+    el.innerHTML = `<div class="ui-cards">
+      <div class="ui-card" style="max-width:300px;">
+        <div class="ui-card-title">${escapeHtml(data.symbol || "")} Expirations (${exps.length})</div>
+        ${exps.map(d => `<div class="ui-card-row"><span class="val">${escapeHtml(d)}</span></div>`).join("")}
+      </div>
+    </div>`;
+  },
+
+  /* ── Futures Products ── */
+  "futures-products"(data, el) {
+    const results = data?.results || (Array.isArray(data) ? data : []);
+    if (!results.length) { el.innerHTML = '<div class="ui-empty">No futures products</div>'; return; }
+    el.innerHTML = `<div class="ui-table-wrap"><table class="ui-table">
+      <thead><tr><th>Symbol</th><th>Name</th><th>Sector</th><th>Exchange</th></tr></thead>
+      <tbody>${results.map(p => `<tr>
+        <td style="font-weight:600;">${escapeHtml(p.symbol || "—")}</td>
+        <td>${escapeHtml(p.name || p.simple_name || "—")}</td>
+        <td>${escapeHtml(p.sector || "—")}</td>
+        <td>${escapeHtml(p.exchange || "—")}</td>
+      </tr>`).join("")}</tbody></table></div>`;
+  },
+
+  /* ── Futures Contracts ── */
+  "futures-contracts"(data, el) {
+    const results = data?.results || (Array.isArray(data) ? data : []);
+    if (!results.length) { el.innerHTML = '<div class="ui-empty">No futures contracts</div>'; return; }
+    el.innerHTML = `<div class="ui-table-wrap"><table class="ui-table">
+      <thead><tr><th>Symbol</th><th>Expiration</th><th>State</th><th>Tick Size</th></tr></thead>
+      <tbody>${results.map(c => `<tr>
+        <td style="font-weight:600;">${escapeHtml(c.symbol || c.contract_symbol || "—")}</td>
+        <td>${escapeHtml(c.expiration_date || "—")}</td>
+        <td>${escapeHtml(c.state || "—")}</td>
+        <td>${escapeHtml(String(c.tick_size ?? "—"))}</td>
+      </tr>`).join("")}</tbody></table></div>`;
+  },
+
+  /* ── Place Order / Options Order (confirmation) ── */
+  "place-order"(data, el) { renderOrderConfirmation(data, el); },
+  "options-order"(data, el) { renderOrderConfirmation(data, el); },
+  "cancel-order"(data, el) { renderOrderConfirmation(data, el); },
+
+  /* ── Instruments ── */
+  instruments(data, el) {
+    const results = data?.results || (Array.isArray(data) ? data : []);
+    if (!results.length) { el.innerHTML = '<div class="ui-empty">No instruments</div>'; return; }
+    el.innerHTML = `<div class="ui-cards">${results.map(i => `<div class="ui-card">
+      <div class="ui-card-title">${escapeHtml(i.symbol || "—")}</div>
+      <div class="ui-card-row"><span class="lbl">Name</span><span class="val">${escapeHtml(i.name || i.simple_name || "—")}</span></div>
+      <div class="ui-card-row"><span class="lbl">Type</span><span class="val">${escapeHtml(i.type || "—")}</span></div>
+      <div class="ui-card-row"><span class="lbl">Country</span><span class="val">${escapeHtml(i.country || "—")}</span></div>
+      <div class="ui-card-row"><span class="lbl">Tradeable</span><span class="val">${i.tradeable ? "Yes" : "No"}</span></div>
+    </div>`).join("")}</div>`;
+  },
+};
+
+function renderOrderConfirmation(data, el) {
+  if (!data) { el.innerHTML = '<div class="ui-empty">No response</div>'; return; }
+  if (data.detail) {
+    el.innerHTML = `<div class="ui-card" style="max-width:400px;border-color:var(--red);">
+      <div class="ui-card-title" style="color:var(--red);">Error</div>
+      <div style="font-size:13px;color:var(--text);">${escapeHtml(typeof data.detail === "string" ? data.detail : JSON.stringify(data.detail))}</div>
+    </div>`;
+    return;
+  }
+  const st = (data.state || "").toLowerCase();
+  el.innerHTML = `
+    <div class="ui-card" style="max-width:400px;">
+      <div class="ui-card-title">Order ${escapeHtml(data.id || "")}</div>
+      <div style="margin-bottom:8px;"><span class="ui-status-badge ${escapeHtml(st)}">${escapeHtml(data.state || "submitted")}</span></div>
+      ${data.symbol ? `<div class="ui-card-row"><span class="lbl">Symbol</span><span class="val">${escapeHtml(data.symbol)}</span></div>` : ""}
+      ${data.side ? `<div class="ui-card-row"><span class="lbl">Side</span><span class="val" style="color:${data.side==="buy"?"var(--accent)":"var(--red)"};">${escapeHtml(data.side)}</span></div>` : ""}
+      ${data.quantity ? `<div class="ui-card-row"><span class="lbl">Quantity</span><span class="val">${escapeHtml(data.quantity)}</span></div>` : ""}
+      ${data.type ? `<div class="ui-card-row"><span class="lbl">Type</span><span class="val">${escapeHtml(data.type)}</span></div>` : ""}
+      ${data.price ? `<div class="ui-card-row"><span class="lbl">Price</span><span class="val">${fmtPrice(data.price)}</span></div>` : ""}
+      ${data.created_at ? `<div class="ui-card-row"><span class="lbl">Created</span><span class="val" style="font-size:11px;">${new Date(data.created_at).toLocaleString()}</span></div>` : ""}
+    </div>`;
+}
+
+/* ── Canvas Chart ── */
+
+function drawChart(bars, canvas, tooltip) {
+  if (!canvas) return;
+  const dpr = window.devicePixelRatio || 1;
+  const rect = canvas.parentElement.getBoundingClientRect();
+  const W = rect.width - 32;
+  const H = Math.min(420, Math.max(260, W * 0.45));
+  canvas.width = W * dpr;
+  canvas.height = H * dpr;
+  canvas.style.width = W + "px";
+  canvas.style.height = H + "px";
+
+  const ctx = canvas.getContext("2d");
+  ctx.scale(dpr, dpr);
+
+  // Volume sub-chart takes bottom 20%
+  const volH = Math.round(H * 0.18);
+  const volGap = 8;
+  const pad = { top: 16, right: 60, bottom: 32, left: 8 };
+  const priceBottom = H - pad.bottom - volH - volGap;
+  const cw = W - pad.left - pad.right;
+  const ch = priceBottom - pad.top;
+
+  const mono = getComputedStyle(document.body).getPropertyValue("--mono");
+  const GREEN = "#22c55e";
+  const RED = "#ef4444";
+  const GREEN_DIM = "rgba(34,197,94,0.35)";
+  const RED_DIM = "rgba(239,68,68,0.35)";
+
+  // Parse data
+  const points = bars.map(b => ({
+    date: b.begins_at,
+    close: parseFloat(b.close_price),
+    open: parseFloat(b.open_price),
+    high: parseFloat(b.high_price),
+    low: parseFloat(b.low_price),
+    vol: b.volume || 0,
+  })).filter(p => !isNaN(p.close) && !isNaN(p.open));
+
+  if (!points.length) return;
+
+  // Price range from highs/lows
+  const allHighs = points.map(p => p.high);
+  const allLows = points.map(p => p.low);
+  let minP = Math.min(...allLows);
+  let maxP = Math.max(...allHighs);
+  const range = maxP - minP || 1;
+  minP -= range * 0.03;
+  maxP += range * 0.03;
+
+  const maxVol = Math.max(...points.map(p => p.vol)) || 1;
+
+  // Candle geometry
+  const candleStep = cw / points.length;
+  const candleW = Math.max(1, Math.min(12, candleStep * 0.7));
+
+  function xc(i) { return pad.left + candleStep * (i + 0.5); }
+  function yp(v) { return pad.top + (1 - (v - minP) / (maxP - minP)) * ch; }
+  function yv(v) { return H - pad.bottom - (v / maxVol) * volH; }
+
+  const labelCount = Math.min(6, points.length);
+
+  function drawFrame(hlIdx) {
+    ctx.clearRect(0, 0, W, H);
+
+    // Grid lines (price)
+    ctx.strokeStyle = "#2a2a2a"; ctx.lineWidth = 1;
+    const gridLines = 5;
+    for (let i = 0; i <= gridLines; i++) {
+      const gv = minP + (maxP - minP) * (i / gridLines);
+      const gy = yp(gv);
+      ctx.beginPath(); ctx.moveTo(pad.left, gy); ctx.lineTo(pad.left + cw, gy); ctx.stroke();
+      ctx.fillStyle = "#888"; ctx.font = "11px " + mono; ctx.textAlign = "right";
+      ctx.fillText("$" + gv.toFixed(2), W - 4, gy + 4);
+    }
+
+    // Candles
+    for (let i = 0; i < points.length; i++) {
+      const p = points[i];
+      const up = p.close >= p.open;
+      const cx = xc(i);
+      const bodyTop = yp(Math.max(p.open, p.close));
+      const bodyBot = yp(Math.min(p.open, p.close));
+      const bodyH = Math.max(1, bodyBot - bodyTop);
+
+      // Wick
+      ctx.strokeStyle = up ? GREEN : RED;
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(cx, yp(p.high));
+      ctx.lineTo(cx, yp(p.low));
+      ctx.stroke();
+
+      // Body
+      ctx.fillStyle = up ? GREEN : RED;
+      if (candleW > 3) {
+        // Filled for down, hollow for up (traditional) — or just fill both with color
+        ctx.fillRect(cx - candleW / 2, bodyTop, candleW, bodyH);
+      } else {
+        ctx.fillRect(cx - candleW / 2, bodyTop, candleW, bodyH);
+      }
+
+      // Volume bar
+      const vTop = yv(p.vol);
+      const vBot = H - pad.bottom;
+      ctx.fillStyle = up ? GREEN_DIM : RED_DIM;
+      ctx.fillRect(cx - candleW / 2, vTop, candleW, vBot - vTop);
+    }
+
+    // X-axis dates
+    ctx.fillStyle = "#888"; ctx.font = "10px " + mono; ctx.textAlign = "center";
+    for (let i = 0; i < labelCount; i++) {
+      const idx = Math.round(i * (points.length - 1) / (labelCount - 1));
+      const p = points[idx];
+      if (p.date) {
+        const d = new Date(p.date);
+        ctx.fillText(d.toLocaleDateString(undefined, { month: "short", day: "numeric" }), xc(idx), H - 4);
+      }
+    }
+
+    // Crosshair on hover
+    if (hlIdx >= 0 && hlIdx < points.length) {
+      const p = points[hlIdx];
+      const cx = xc(hlIdx);
+      ctx.strokeStyle = "#555"; ctx.lineWidth = 1; ctx.setLineDash([4, 4]);
+      ctx.beginPath(); ctx.moveTo(cx, pad.top); ctx.lineTo(cx, H - pad.bottom); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(pad.left, yp(p.close)); ctx.lineTo(pad.left + cw, yp(p.close)); ctx.stroke();
+      ctx.setLineDash([]);
+
+      // Price label on right axis
+      const labelY = yp(p.close);
+      const up = p.close >= p.open;
+      ctx.fillStyle = up ? GREEN : RED;
+      ctx.fillRect(W - pad.right + 4, labelY - 8, pad.right - 6, 16);
+      ctx.fillStyle = "#000"; ctx.font = "bold 10px " + mono; ctx.textAlign = "left";
+      ctx.fillText("$" + p.close.toFixed(2), W - pad.right + 7, labelY + 4);
+    }
+  }
+
+  drawFrame(-1);
+
+  // Hover
+  let hoverIdx = -1;
+  canvas.onmousemove = (e) => {
+    const br = canvas.getBoundingClientRect();
+    const mx = e.clientX - br.left;
+    const idx = Math.round((mx - pad.left) / candleStep - 0.5);
+    if (idx < 0 || idx >= points.length) { tooltip.style.display = "none"; if (hoverIdx !== -1) { hoverIdx = -1; drawFrame(-1); } return; }
+    if (idx === hoverIdx) return;
+    hoverIdx = idx;
+    const p = points[idx];
+    const up = p.close >= p.open;
+    const chg = p.close - p.open;
+    const chgPct = ((chg / p.open) * 100);
+    const d = p.date ? new Date(p.date).toLocaleDateString() : "";
+    const col = up ? GREEN : RED;
+    tooltip.innerHTML = `
+      <div style="color:var(--text2);font-size:10px;margin-bottom:4px;">${escapeHtml(d)}</div>
+      <div style="display:grid;grid-template-columns:auto 1fr;gap:2px 8px;font-size:11px;">
+        <span style="color:var(--text2);">O</span><span>$${p.open.toFixed(2)}</span>
+        <span style="color:var(--text2);">H</span><span>$${p.high.toFixed(2)}</span>
+        <span style="color:var(--text2);">L</span><span>$${p.low.toFixed(2)}</span>
+        <span style="color:var(--text2);">C</span><span style="color:${col};font-weight:600;">$${p.close.toFixed(2)}</span>
+      </div>
+      <div style="color:${col};font-size:11px;margin-top:4px;">${chg >= 0 ? "+" : ""}${chg.toFixed(2)} (${chgPct >= 0 ? "+" : ""}${chgPct.toFixed(2)}%)</div>
+      ${p.vol ? `<div style="color:var(--text2);font-size:10px;margin-top:2px;">Vol ${p.vol.toLocaleString()}</div>` : ""}`;
+    tooltip.style.display = "block";
+    const tx = xc(idx);
+    tooltip.style.left = (tx + tooltip.offsetWidth + 20 > W ? tx - tooltip.offsetWidth - 12 : tx + 12) + "px";
+    tooltip.style.top = Math.max(pad.top, yp(p.high) - 30) + "px";
+    drawFrame(idx);
+  };
+  canvas.onmouseleave = () => {
+    hoverIdx = -1;
+    tooltip.style.display = "none";
+    drawFrame(-1);
+  };
+}
+
+/* ── App routing + status poll ── */
+function setRoute(path) {
+  if (window.location.pathname !== path) {
+    history.replaceState({}, "", path);
+  }
+}
+
+let _prevConnected = null;
+
+function generateApiKey() {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789';
+  const arr = new Uint8Array(28);
+  crypto.getRandomValues(arr);
+  return Array.from(arr, b => chars[b % chars.length]).join('');
+}
+
+function showOnboardModal() {
+  const key = generateApiKey();
+  document.getElementById("onboardKey").textContent = key;
+  document.getElementById("apiKey").value = key;
+  localStorage.setItem("hoodlink_api_key", key);
+  document.getElementById("onboardModal").classList.add("visible");
+}
+
+function closeOnboardModal() {
+  localStorage.setItem("hoodlink_onboarded", "1");
+  document.getElementById("onboardModal").classList.remove("visible");
+}
+
+function copyOnboardKey() {
+  const key = document.getElementById("onboardKey").textContent;
+  const btn = document.getElementById("onboardCopyBtn");
+  navigator.clipboard.writeText(key).then(() => {
+    btn.textContent = "Copied!";
+    setTimeout(() => btn.textContent = "Copy", 2000);
+  }).catch(() => {
+    const ta = Object.assign(document.createElement("textarea"), { value: key });
+    document.body.appendChild(ta); ta.select(); document.execCommand("copy"); document.body.removeChild(ta);
+    btn.textContent = "Copied!"; setTimeout(() => btn.textContent = "Copy", 2000);
+  });
+}
+
+function showConnectedModal() {
+  if (!localStorage.getItem("hoodlink_onboarded")) {
+    showOnboardModal();
+    return;
+  }
+  const modal = $("connectedModal");
+  if (!modal) return;
+  modal.classList.add("visible");
+  setTimeout(() => modal.classList.remove("visible"), 6000);
+}
+
+function renderAppMode({ connected }) {
+  const setup = $("setupView");
+  const dash = $("dashboardView");
+  const installedBefore = localStorage.getItem("hoodlink_extension_seen") === "1";
+
+  if (connected) {
+    localStorage.setItem("hoodlink_extension_seen", "1");
+    if (setup) setup.style.display = "none";
+    if (dash) dash.style.display = "block";
+    setRoute("/");
+  } else {
+    if (setup) setup.style.display = "block";
+    if (dash) dash.style.display = "none";
+    setRoute("/setup");
+
+    const installSteps = $("installStepsBlock");
+    const reconnect = $("reconnectBlock");
+    if (installSteps && reconnect) {
+      installSteps.style.display = installedBefore ? "none" : "block";
+      reconnect.style.display = installedBefore ? "block" : "none";
+    }
+  }
+
+  const badge = $("setupStatusBadge");
+  if (badge) {
+    badge.textContent = connected ? "Connected" : "Waiting for extension";
+    badge.className = "setup-badge" + (connected ? " ok" : "");
+  }
+
+  if (connected && _prevConnected === false) {
+    showConnectedModal();
+  }
+  _prevConnected = connected;
+}
+
+async function checkStatus() {
+  try {
+    const res = await fetch("/api/v1/status");
+    const data = await res.json();
+    const dot = $("statusDot");
+    if (dot) {
+      dot.className = "status-dot" + (data.bridge_connected ? " ok" : "");
+      dot.title = data.bridge_connected ? "Bridge connected" : "Bridge disconnected";
+    }
+    renderAppMode({ connected: !!data.bridge_connected });
+  } catch {
+    renderAppMode({ connected: false });
+  }
+}
+
+setHeaderAccent(true);
+// Restore API key from sessionStorage (cleared when tab closes); persist changes within session
+(function() {
+  const input = document.getElementById("apiKey");
+  const saved = sessionStorage.getItem("hoodlink_api_key");
+  if (saved) input.value = saved;
+  input.addEventListener("input", function() { this.classList.remove("error"); });
+  input.addEventListener("change", function() {
+    if (this.value) sessionStorage.setItem("hoodlink_api_key", this.value);
+    else sessionStorage.removeItem("hoodlink_api_key");
+  });
+})();
+// Restore endpoint from URL hash on load
+(function() {
+  const id = window.location.hash.slice(1);
+  if (id) {
+    const all = ENDPOINTS.flatMap(g => g.endpoints);
+    const ep = all.find(e => e.id === id);
+    if (ep) selectEndpoint(ep);
+  }
+})();
+checkStatus();
+setInterval(checkStatus, 3000);
+</script>
+
+<div id="helpModal">
+  <div class="help-overlay" onclick="closeHelp()"></div>
+  <div class="help-box">
+    <button class="help-close" onclick="closeHelp()">✕</button>
+    <div id="helpContent" class="help-page"></div>
+  </div>
+</div>
+
+<div id="onboardModal">
+  <div class="onboard-box">
+    <div class="onboard-title">Secure your Hood-link</div>
+    <div class="onboard-sub">A unique API key has been generated for you. Copy it and set it as <code>HOODLINK_API_KEY</code> before starting the server to prevent unauthorized access.</div>
+    <div class="onboard-key-wrap">
+      <span class="onboard-key" id="onboardKey"></span>
+      <button class="onboard-copy-btn" id="onboardCopyBtn" onclick="copyOnboardKey()">Copy</button>
+    </div>
+    <div class="onboard-hint">
+      Update it anytime via the key input in the top-right corner of this page. Press <strong style="color:var(--text);">?</strong> for full setup docs and API examples.
+    </div>
+    <button class="onboard-close" onclick="closeOnboardModal()">Got it</button>
+  </div>
+</div>
+
+<div id="connectedModal" onclick="this.classList.remove('visible')">
+  <div class="modal-card">
+    <div class="modal-logo">
+      <img src="/logo.svg" alt="Hood-link">
+    </div>
+    <div class="modal-check">
+      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="20 6 9 17 4 12"></polyline>
+      </svg>
+    </div>
+    <div class="modal-title">Hood-link is connected</div>
+    <div class="modal-sub">click anywhere to dismiss</div>
+  </div>
+</div>
+</body>
+</html>

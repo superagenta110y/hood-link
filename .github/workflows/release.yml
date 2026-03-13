@@ -1,0 +1,102 @@
+name: Build & Release
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            artifact_suffix: linux
+            exe_name: hoodlink-server
+          - os: macos-latest
+            artifact_suffix: macos
+            exe_name: hoodlink-server
+          - os: windows-latest
+            artifact_suffix: windows
+            exe_name: hoodlink-server.exe
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install build deps
+        shell: bash
+        run: |
+          python -m pip install --upgrade pip
+          pip install pyinstaller
+          pip install -e ./server
+
+      - name: Build executable (PyInstaller, Unix)
+        if: runner.os != 'Windows'
+        shell: bash
+        run: |
+          pyinstaller --noconfirm --onefile --name hoodlink-server server/hoodlink/__main__.py \
+            --add-data "server/hoodlink/ui.html:hoodlink" \
+            --add-data "server/hoodlink/logo.svg:hoodlink"
+
+      - name: Build executable (PyInstaller, Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          pyinstaller --noconfirm --onefile --name hoodlink-server server/hoodlink/__main__.py `
+            --add-data "server/hoodlink/ui.html;hoodlink" `
+            --add-data "server/hoodlink/logo.svg;hoodlink"
+
+      - name: Prepare bundle (Unix)
+        if: runner.os != 'Windows'
+        shell: bash
+        run: |
+          mkdir -p bundle/hoodlink-${{ matrix.artifact_suffix }}
+          cp dist/hoodlink-server bundle/hoodlink-${{ matrix.artifact_suffix }}/
+          cp -R extension bundle/hoodlink-${{ matrix.artifact_suffix }}/extension
+          cp README.md LICENSE bundle/hoodlink-${{ matrix.artifact_suffix }}/
+          cd bundle
+          zip -r hoodlink-${{ matrix.artifact_suffix }}.zip hoodlink-${{ matrix.artifact_suffix }}
+
+      - name: Prepare bundle (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path bundle\hoodlink-${{ matrix.artifact_suffix }} | Out-Null
+          Copy-Item dist\hoodlink-server.exe bundle\hoodlink-${{ matrix.artifact_suffix }}\
+          Copy-Item -Recurse extension bundle\hoodlink-${{ matrix.artifact_suffix }}\extension
+          Copy-Item README.md, LICENSE bundle\hoodlink-${{ matrix.artifact_suffix }}\
+          Compress-Archive -Path bundle\hoodlink-${{ matrix.artifact_suffix }} -DestinationPath bundle\hoodlink-${{ matrix.artifact_suffix }}.zip -Force
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: hoodlink-${{ matrix.artifact_suffix }}
+          path: bundle/hoodlink-${{ matrix.artifact_suffix }}.zip
+
+  release:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: build
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: release-assets
+
+      - name: Publish release assets
+        uses: softprops/action-gh-release@v2
+        with:
+          files: release-assets/**/*.zip
+          generate_release_notes: true
