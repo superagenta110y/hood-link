@@ -13,6 +13,8 @@ from hoodlink.config import settings
 from hoodlink.models import StatusResponse
 from hoodlink.routes import account, market, trading
 from hoodlink.ws import client
+from hoodlink.ws.robinhood import stream as rh_stream
+from hoodlink.ws.stream import router as stream_router
 
 _UI_HTML = (Path(__file__).parent / "ui.html").read_text(encoding="utf-8")
 _LOGO_SVG = (Path(__file__).parent / "logo.svg").read_bytes()
@@ -40,6 +42,8 @@ async def lifespan(app: FastAPI):
 
     yield
 
+    await rh_stream.stop()
+
 
 app = FastAPI(title="HoodLink", version="0.4.0", lifespan=lifespan)
 
@@ -56,6 +60,9 @@ app.include_router(account.router, prefix="/api/v1")
 
 # Client WebSocket
 app.include_router(client.router)
+
+# Robinhood dxFeed stream
+app.include_router(stream_router)
 
 
 @app.get("/", response_class=HTMLResponse, include_in_schema=False)

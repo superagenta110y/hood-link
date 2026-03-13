@@ -52,6 +52,28 @@ class Bridge:
         finally:
             self._ws = None
             self._cancel_pending("Extension disconnected")
+            await self._dispatch_stream({"channel": "rh_status", "data": {"connected": False, "error": "Extension disconnected"}})
+
+    async def _send_and_wait(self, command: dict, timeout: float | None = None) -> dict:
+        if not self._ws:
+            raise RuntimeError("Extension not connected")
+        corr_id = uuid.uuid4().hex
+        future: asyncio.Future = asyncio.get_running_loop().create_future()
+        self._pending[corr_id] = future
+        command["id"] = corr_id
+        await self._ws.send_text(json.dumps(command))
+        t = timeout if timeout is not None else settings.bridge_timeout
+        try:
+            result = await asyncio.wait_for(future, timeout=t)
+        except asyncio.TimeoutError:
+            raise RuntimeError(f"Bridge command timed out after {t}s")
+        finally:
+            self._pending.pop(corr_id, None)
+        if result.get("error"):
+            raise RuntimeError(f"Extension error: {result['error']}")
+        return result.get("data", {})
+
+    # ── REST proxy ──────────────────────────────────────────────────────────
 
     async def send_command(
         self,
@@ -60,34 +82,76 @@ class Bridge:
         headers: dict | None = None,
         body: dict | None = None,
     ) -> dict:
-        if not self._ws:
-            raise RuntimeError("Extension not connected")
-
-        corr_id = uuid.uuid4().hex
-        future: asyncio.Future = asyncio.get_event_loop().create_future()
-        self._pending[corr_id] = future
-
-        command = {
-            "id": corr_id,
+        return await self._send_and_wait({
             "action": "fetch",
             "url": url,
             "method": method,
             "headers": headers or {},
             "body": body,
-        }
-        await self._ws.send_text(json.dumps(command))
+        })
 
+    async def get_auth_token(self) -> str:
+        result = await self._send_and_wait({"action": "get_token"})
+        token = result.get("token")
+        if not token:
+            raise RuntimeError("No auth token captured — browse Robinhood first to authenticate")
+        return token
+
+    async def fetch_streaming_token(self) -> str:
+        """Fetch a short-lived dxFeed streaming token from Robinhood's token endpoint."""
+        session_id = uuid.uuid4()
+        result = await self._send_and_wait(
+            {
+                "action": "fetch",
+                "url": f"https://api.robinhood.com/marketdata/token/v1/?session_id={session_id}&session_type=blackwidow",
+                "method": "GET",
+                "headers": {},
+                "body": None,
+            },
+            timeout=30.0,
+        )
+        # Robinhood wraps the response in a data envelope
         try:
-            result = await asyncio.wait_for(future, timeout=settings.bridge_timeout)
-        except asyncio.TimeoutError:
-            raise RuntimeError(f"Bridge command timed out after {settings.bridge_timeout}s")
-        finally:
-            self._pending.pop(corr_id, None)
+            token = result["data"]["data"]["token"]
+        except (KeyError, TypeError):
+            # Try flat structure as fallback
+            try:
+                token = result["data"]["token"]
+            except (KeyError, TypeError):
+                try:
+                    token = result["token"]
+                except (KeyError, TypeError):
+                    raise RuntimeError(f"Unexpected streaming token response: {result}")
+        return token
 
-        if result.get("error"):
-            raise RuntimeError(f"Extension error: {result['error']}")
+    # ── Robinhood dxFeed stream proxy ────────────────────────────────────────
 
-        return result.get("data", {})
+    async def rh_connect(self, stream_token: str) -> None:
+        """Tell inject.js to open the Robinhood dxFeed WebSocket.
+        Resolves as soon as the socket opens (~ms); auth arrives async via rh_status.
+        """
+        await self._send_and_wait(
+            {"action": "rh_connect", "stream_token": stream_token},
+            timeout=8.0,
+        )
+
+    async def rh_subscribe(self, subscriptions: list[dict]) -> None:
+        await self._send_and_wait({"action": "rh_subscribe", "subscriptions": subscriptions})
+
+    async def rh_unsubscribe(self, subscriptions: list[dict]) -> None:
+        await self._send_and_wait({"action": "rh_unsubscribe", "subscriptions": subscriptions})
+
+    async def rh_disconnect(self) -> None:
+        try:
+            await self._send_and_wait({"action": "rh_disconnect"})
+        except Exception:
+            pass
+
+    async def rh_get_subs(self) -> list[dict]:
+        result = await self._send_and_wait({"action": "rh_get_subs"})
+        return result.get("subscriptions", [])
+
+    # ── Generic stream channel pub/sub ───────────────────────────────────────
 
     def subscribe_stream(self, channel: str) -> asyncio.Queue:
         queue: asyncio.Queue = asyncio.Queue()

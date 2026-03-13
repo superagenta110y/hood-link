@@ -76,6 +76,7 @@
   .method-badge.GET { background: #ffffff0d; color: #666; }
   .method-badge.POST { background: #ffffff0d; color: #666; }
   .method-badge.DELETE { background: #ffffff0d; color: #666; }
+  .method-badge.WS { background: #a855f718; color: #a855f7; }
   .main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
   .request-panel {
     padding: 24px; border-bottom: 1px solid var(--border); flex-shrink: 0;
@@ -402,6 +403,100 @@
   .arch-af { stroke: var(--accent); stroke-width: 1.5; stroke-dasharray: 6 4; fill: none; animation: arch-fwd 0.7s linear infinite; }
   .arch-ar { stroke: #2e2e2e; stroke-width: 1; stroke-dasharray: 5 7; fill: none; animation: arch-ret 1.3s linear infinite; }
 
+  /* ── Stream panel ── */
+  .stream-layout { display: flex; flex-direction: column; height: 100%; overflow: hidden; }
+  .stream-controls { padding: 20px 24px 14px; border-bottom: 1px solid var(--border); flex-shrink: 0; }
+  .stream-title-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; }
+  .stream-title { font-size: 16px; font-weight: 600; }
+  .stream-path { font-family: var(--mono); font-size: 13px; color: var(--text2); margin-bottom: 12px; }
+  .stream-status {
+    font-size: 12px; font-family: var(--mono); color: var(--text2);
+    display: flex; align-items: center; gap: 6px;
+  }
+  .stream-status-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--text2); flex-shrink: 0; }
+  .stream-status-dot.connecting { background: var(--yellow); animation: pulse 1s ease infinite; }
+  .stream-status-dot.connected  { background: var(--accent); }
+  .stream-status-dot.error      { background: var(--red); }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+  .stream-add-input {
+    background: var(--surface); border: 1px solid var(--border); color: var(--text);
+    padding: 7px 10px; border-radius: 6px; font-size: 13px; font-family: var(--mono);
+    width: auto; min-width: 110px; text-transform: uppercase;
+  }
+  .stream-add-input:focus { outline: none; border-color: var(--accent); }
+  .stream-pending-row {
+    display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
+    margin-top: 8px; padding: 8px 10px; border-radius: 6px;
+    background: var(--surface2); border: 1px solid var(--border);
+  }
+  .stream-pending-sym {
+    font-family: var(--mono); font-size: 13px; font-weight: 700;
+    color: var(--text); min-width: 56px; flex-shrink: 0;
+  }
+  .stream-pending-types { display: flex; flex-wrap: wrap; gap: 4px; flex: 1; }
+  .autocomplete-item.disabled { opacity: 0.4; cursor: default; pointer-events: none; }
+  .stream-sym-list { display: flex; flex-direction: column; gap: 5px; }
+  .stream-sym-row {
+    display: flex; align-items: center; gap: 8px;
+    padding: 6px 10px; border-radius: 6px;
+    background: var(--surface2); border: 1px solid var(--border);
+  }
+  .stream-sym-name { font-family: var(--mono); font-size: 13px; font-weight: 700; min-width: 60px; color: var(--text); }
+  .stream-sym-types { display: flex; flex-wrap: wrap; gap: 4px; flex: 1; }
+  .stream-type-pill {
+    cursor: pointer; padding: 3px 8px; border-radius: 4px; border: 1px solid var(--border);
+    font-size: 11px; font-weight: 700; font-family: var(--mono);
+    background: var(--surface); color: var(--text2); transition: all 0.12s; user-select: none;
+  }
+  .stream-type-pill:hover { border-color: var(--text2); color: var(--text); }
+  .stream-type-pill.active-Trade    { background: #22c55e18; border-color: #22c55e55; color: #22c55e; }
+  .stream-type-pill.active-TradeETH { background: #22c55e10; border-color: #22c55e33; color: #4ade80; }
+  .stream-type-pill.active-Quote    { background: #3b82f618; border-color: #3b82f655; color: #3b82f6; }
+  .stream-type-pill.active-Candle   { background: #f9731618; border-color: #f9731655; color: #fb923c; }
+  .stream-type-pill.active-Order    { background: #a855f718; border-color: #a855f755; color: #a855f7; }
+  .stream-type-pill.active-Summary  { background: #eab30818; border-color: #eab30855; color: #eab308; }
+  .stream-sym-remove {
+    cursor: pointer; color: var(--text2); font-size: 16px; line-height: 1;
+    padding: 0 4px; border-radius: 4px; transition: color 0.1s; flex-shrink: 0;
+  }
+  .stream-sym-remove:hover { color: var(--red); }
+  .stream-feed-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 10px 24px 8px; flex-shrink: 0; border-bottom: 1px solid var(--border);
+  }
+  .stream-feed-meta { display: flex; align-items: center; gap: 12px; font-size: 12px; color: var(--text2); }
+  .stream-event-count { font-family: var(--mono); }
+  .stream-feed { flex: 1; overflow-y: auto; font-family: var(--mono); font-size: 12px; padding: 8px 16px; background: var(--surface); }
+  .stream-event { padding: 4px 8px; border-radius: 4px; margin-bottom: 2px; line-height: 1.5; display: flex; gap: 8px; align-items: baseline; }
+  .stream-event:hover { background: var(--surface2); }
+  .stream-event-type { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; min-width: 72px; flex-shrink: 0; }
+  .stream-event-sym  { font-weight: 700; color: var(--text); min-width: 60px; flex-shrink: 0; }
+  .stream-event-data { color: var(--text2); flex: 1; overflow: hidden; display: flex; align-items: baseline; gap: 0; white-space: nowrap; }
+  .stream-event-ts   { color: #444; font-size: 10px; flex-shrink: 0; }
+  /* ── Event sub-field columns ── */
+  .ev-lbl { color: var(--text2); font-size: 10px; padding-right: 3px; flex-shrink: 0; }
+  .ev-bid { color: #3b82f6; }
+  .ev-ask { color: #f97316; }
+  .ev-px  { color: var(--text); min-width: 64px; flex-shrink: 0; }
+  .ev-sz  { color: var(--text2); min-width: 44px; flex-shrink: 0; font-size: 11px; padding-right: 8px; }
+  .ev-spd { color: var(--yellow); min-width: 56px; flex-shrink: 0; font-size: 11px; padding-right: 8px; }
+  .ev-imb { min-width: 40px; flex-shrink: 0; font-weight: 600; font-size: 11px; }
+  .ev-imb.pos { color: #22c55e; }
+  .ev-imb.neg { color: var(--red); }
+  .ev-imb.neu { color: var(--text2); }
+  .ev-vol { color: var(--text2); min-width: 90px; flex-shrink: 0; font-size: 11px; }
+  .ev-ohlc { color: var(--text); min-width: 56px; flex-shrink: 0; }
+  .event-type-Trade .stream-event-type    { color: #22c55e; }
+  .event-type-TradeETH .stream-event-type { color: #4ade80; }
+  .event-type-Quote .stream-event-type    { color: #3b82f6; }
+  .event-type-Candle .stream-event-type   { color: #fb923c; }
+  .event-type-Order .stream-event-type    { color: #a855f7; }
+  .event-type-Summary .stream-event-type  { color: #eab308; }
+  .stream-empty {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    height: 100%; color: var(--text2); font-size: 13px; gap: 8px; font-family: inherit;
+  }
+
   /* ── Setup page ── */
   .setup-wrap {
     min-height: 100vh; display: flex; flex-direction: column;
@@ -632,7 +727,8 @@ const ENDPOINTS = [
       params: [{ name: "symbol", in: "path", required: true, placeholder: "AAPL" }] },
     { id: "options", method: "GET", path: "/api/v1/market/options/{symbol}", title: "Options Chain", customForm: "options-chain" },
     { id: "instruments", method: "GET", path: "/api/v1/market/instruments", title: "Instruments",
-      params: [{ name: "query", in: "query", placeholder: "Search by name..." }] }
+      params: [{ name: "query", in: "query", placeholder: "Search by name..." }] },
+    { id: "stream", method: "WS", path: "/api/v1/stream", title: "Market Stream", customForm: "stream" }
   ]},
   { group: "Trading", endpoints: [
     { id: "accounts", method: "GET", path: "/api/v1/account/accounts", title: "Accounts", params: [] },
@@ -795,7 +891,42 @@ curl -X POST -H "X-API-Key: ${escapeHtml(key)}" -H "Content-Type: application/js
   -d '{"symbol":"AAPL","side":"buy","quantity":1,"type":"limit","price":150.00}'</pre>
 
   <h3>WebSocket Streaming</h3>
-  <p>Connect to <code>ws://localhost:7878/ws?api_key=${escapeHtml(key)}</code> for real-time streaming.</p>
+  <p>Connect to <code>ws://localhost:7878/ws?api_key=${escapeHtml(key)}</code> for the generic bridge stream.</p>
+  <p>For <strong>live market data</strong> (dxFeed/Robinhood), connect to <code>ws://localhost:7878/api/v1/stream?api_key=${escapeHtml(key)}</code> — or use the <strong>Stream</strong> entry in the sidebar for an interactive panel.</p>
+  <pre># Python example
+import asyncio, json, websockets
+
+async def main():
+    url = "ws://localhost:7878/api/v1/stream?api_key=${escapeHtml(key)}"
+    async with websockets.connect(url) as ws:
+        await ws.send(json.dumps({"action": "subscribe", "subscriptions": [
+            {"symbol": "AAPL", "type": "Trade"},
+            {"symbol": "AAPL", "type": "Quote"},
+        ]}))
+        async for msg in ws:
+            print(json.loads(msg))
+
+asyncio.run(main())</pre>
+
+  <h3>dxFeed Event Types</h3>
+  <p>The streaming endpoint proxies Robinhood's dxFeed (DXF-JS/0.5.1) protocol. Available event types and their fields:</p>
+  <ul>
+    <li><strong style="color:#22c55e;">Trade</strong> — <code>price, dayVolume, eventSymbol, eventType, time</code></li>
+    <li><strong style="color:#4ade80;">TradeETH</strong> — same fields as Trade (extended hours)</li>
+    <li><strong style="color:#3b82f6;">Quote</strong> — <code>askPrice, askSize, askTime, bidPrice, bidSize, bidTime, eventSymbol, eventType</code></li>
+    <li><strong style="color:#fb923c;">Candle</strong> — <code>open, high, low, close, volume, impVolatility, openInterest, eventSymbol, eventType, eventTime, eventFlags</code></li>
+    <li><strong style="color:#a855f7;">Order</strong> — <code>price, size, count, side, scope, orderSide, index, time, sequence, eventFlags, eventSymbol, eventType</code> (L2 depth)</li>
+    <li><strong style="color:#eab308;">Summary</strong> — <code>dayOpenPrice, dayHighPrice, dayLowPrice, dayClosePrice, openInterest, eventSymbol, eventType</code></li>
+  </ul>
+  <p>For <strong>Candle</strong> subscriptions, you can pass optional fields:</p>
+  <pre>{"action": "subscribe", "subscriptions": [{
+    "symbol": "AAPL",
+    "type": "Candle",
+    "from_time": ${Date.now() - 86400000},
+    "instrument_type": "equity"
+}]}</pre>
+  <p>dxFeed Candle symbol aggregation notation (advanced): <code>AAPL{=d}</code> = daily, <code>AAPL{=t,a=m}</code> = tick bars with mid price. Pass the formatted symbol in the <code>symbol</code> field.</p>
+  <p><strong>Order scope values</strong>: <code>COMPOSITE</code> (NBBO), <code>REGIONAL</code> (per exchange), <code>AGGREGATE</code> (aggregated by price level), <code>ORDER</code> (individual order). Use Order events for Level 2 order book data.</p>
 
   <h3>Security Notes</h3>
   <ul>
@@ -852,6 +983,7 @@ function selectEndpoint(ep) {
   if (ep.customForm === "order") { renderOrderForm(main, ep); return; }
   if (ep.customForm === "options-order") { renderOptionsOrderForm(main, ep); return; }
   if (ep.customForm === "options-chain") { renderOptionsChainForm(main, ep); return; }
+  if (ep.customForm === "stream") { renderStreamPanel(main, ep); return; }
 
   const params = ep.params || [];
   let paramsHTML = "";
@@ -922,7 +1054,7 @@ function escapeHtml(s) { return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").rep
 
 function fmtPrice(v) { return v ? "$" + parseFloat(v).toFixed(2) : "—"; }
 
-function wireSymbolAutocomplete(inp, dd, onPick) {
+function wireSymbolAutocomplete(inp, dd, onPick, isDisabled) {
   if (!inp || !dd) return;
   let timer = null, hlIdx = -1;
 
@@ -938,18 +1070,23 @@ function wireSymbolAutocomplete(inp, dd, onPick) {
       const sym = data.symbol || q;
       dd.innerHTML = "";
       const item = document.createElement("div");
-      item.className = "autocomplete-item";
-      item.innerHTML = `<span class="sym">${escapeHtml(sym)}</span><span class="price">${fmtPrice(data.last_trade_price)}</span>`;
-      item.onclick = () => { inp.value = sym; dd.classList.remove("open"); if (onPick) onPick(sym, data); };
-      dd.appendChild(item);
-      hlIdx = 0; hl(dd.querySelectorAll(".autocomplete-item"));
+      const disabled = isDisabled && isDisabled(sym);
+      item.className = "autocomplete-item" + (disabled ? " disabled" : "");
+      item.innerHTML = `<span class="sym">${escapeHtml(sym)}</span><span class="price">${fmtPrice(data.last_trade_price)}${disabled ? ' <span style="font-size:10px;opacity:.6">already added</span>' : ''}</span>`;
+      if (!disabled) {
+        item.onclick = () => { inp.value = sym; dd.classList.remove("open"); if (onPick) onPick(sym, data); };
+        dd.appendChild(item);
+        hlIdx = 0; hl(dd.querySelectorAll(".autocomplete-item"));
+      } else {
+        dd.appendChild(item);
+      }
     } catch { dd.innerHTML = '<div class="autocomplete-spinner">No results</div>'; }
   }
 
   inp.addEventListener("input", () => {
     const q = inp.value.trim().toUpperCase();
     clearTimeout(timer); hlIdx = -1;
-    if (q.length < 1) { dd.classList.remove("open"); return; }
+    if (q.length < 1) { dd.innerHTML = ""; dd.classList.remove("open"); return; }
     timer = setTimeout(() => doSearch(q), 250);
   });
 
@@ -1034,7 +1171,7 @@ function wireMultiSymbolAutocomplete(wrap, inp, dd, hidden) {
   inp.addEventListener("input", () => {
     const q = inp.value.trim().toUpperCase();
     clearTimeout(timer); hlIdx = -1;
-    if (q.length < 1) { dd.classList.remove("open"); return; }
+    if (q.length < 1) { dd.innerHTML = ""; dd.classList.remove("open"); return; }
     timer = setTimeout(() => doSearch(q), 250);
   });
 
@@ -2133,6 +2270,395 @@ function renderOrderConfirmation(data, el) {
       ${data.created_at ? `<div class="ui-card-row"><span class="lbl">Created</span><span class="val" style="font-size:11px;">${new Date(data.created_at).toLocaleString()}</span></div>` : ""}
     </div>`;
 }
+
+/* ── Stream Panel ── */
+
+let _streamWs             = null;
+let _streamEventCount     = 0;
+let _streamActive         = false;
+let _streamReconnectTimer = null;
+let _streamReconnectDelay = 1000;
+// Map<symbol, Set<eventType>> — client-side subscription state
+let _streamSymTypes = new Map();
+// Pending symbol being configured before add
+let _streamPendingSymbol = null;
+let _streamPendingTypes  = new Set();
+
+const ALL_STREAM_TYPES = ["Trade","TradeETH","Quote","Candle","Order","Summary"];
+
+function renderStreamPanel(container, ep) {
+  _streamActive         = true;
+  _streamReconnectDelay = 1000;
+  _streamPendingSymbol  = null;
+  _streamPendingTypes   = new Set();
+  container.innerHTML = `
+    <div class="stream-layout">
+      <div class="stream-controls">
+        <div class="stream-title-row">
+          <div class="stream-title">${ep.title}</div>
+          <div class="stream-status">
+            <div class="stream-status-dot connecting" id="streamDot"></div>
+            <span id="streamStatusText">Connecting…</span>
+          </div>
+        </div>
+        <div class="stream-path">WS ${ep.path}?api_key=&lt;key&gt;</div>
+
+        <div id="streamAddWrapper" style="position:relative;display:inline-block">
+          <input type="text" id="streamAddInput" class="stream-add-input"
+            placeholder="TICKER…" autocomplete="off" spellcheck="false" />
+          <div id="streamAddDropdown" class="autocomplete-dropdown"></div>
+        </div>
+        <div id="streamPendingRow" class="stream-pending-row" style="display:none"></div>
+
+        <div id="streamSymList" class="stream-sym-list" style="margin-top:10px"></div>
+      </div>
+
+      <div class="stream-feed-header">
+        <div style="font-size:13px;font-weight:600;color:var(--text2);">Live Events</div>
+        <div class="stream-feed-meta">
+          <span class="stream-event-count" id="streamCount">0 events</span>
+          <button onclick="streamClearFeed()" style="background:none;border:1px solid var(--border);color:var(--text2);padding:3px 10px;border-radius:5px;font-size:11px;cursor:pointer;font-family:inherit;">Clear</button>
+        </div>
+      </div>
+
+      <div class="stream-feed" id="streamFeed">
+        <div class="stream-empty" id="streamEmpty">
+          <span>No subscriptions</span>
+          <span style="font-size:11px;">Search a symbol above to get started</span>
+        </div>
+      </div>
+    </div>`;
+  // Wire autocomplete — disable already-subscribed symbols
+  wireSymbolAutocomplete(
+    $("streamAddInput"), $("streamAddDropdown"),
+    (sym) => { _streamPickSymbol(sym); $("streamAddInput").value = ""; },
+    (sym) => _streamSymTypes.has(sym)
+  );
+  // Auto-connect immediately on panel open
+  _streamConnectWs();
+}
+
+function getStreamApiKey() {
+  return sessionStorage.getItem("hoodlink_api_key") || document.getElementById("apiKey").value || "";
+}
+
+function streamSetStatus(state, text) {
+  const dot = $("streamDot"); const txt = $("streamStatusText");
+  if (!dot || !txt) return;
+  dot.className = "stream-status-dot" + (state ? ` ${state}` : "");
+  txt.textContent = text;
+}
+
+function _streamConnectWs() {
+  if (!_streamActive) return;
+  clearTimeout(_streamReconnectTimer);
+  if (_streamWs && (_streamWs.readyState === WebSocket.OPEN || _streamWs.readyState === WebSocket.CONNECTING)) return;
+
+  const key = getStreamApiKey();
+  if (!key) {
+    streamSetStatus("", "API key required");
+    _streamReconnectTimer = setTimeout(_streamConnectWs, _streamReconnectDelay);
+    _streamReconnectDelay = Math.min(_streamReconnectDelay * 2, 30000);
+    return;
+  }
+
+  const port = location.port || 7878;
+  const url  = `ws://127.0.0.1:${port}/api/v1/stream?api_key=${encodeURIComponent(key)}`;
+  streamSetStatus("connecting", "Connecting…");
+  const ws = new WebSocket(url);
+  _streamWs = ws;
+
+  ws.onopen = () => {
+    _streamReconnectDelay = 1000;
+    streamSetStatus("connecting", "Awaiting RH…");
+    // Re-subscribe local subscriptions (server auto-starts RH stream if needed)
+    const subs = [];
+    _streamSymTypes.forEach((types, sym) => {
+      types.forEach(t => subs.push({ symbol: sym, type: t }));
+    });
+    if (subs.length) ws.send(JSON.stringify({ action: "subscribe", subscriptions: subs }));
+  };
+
+  ws.onmessage = (e) => {
+    try {
+      const msg = JSON.parse(e.data);
+      if (msg.type === "rh_status") {
+        streamSetStatus(msg.connected ? "connected" : "connecting", msg.connected ? "Live" : "Awaiting RH…");
+        // Merge server subscriptions into local state (restores state after UI refresh)
+        if (Array.isArray(msg.subscriptions)) {
+          for (const sub of msg.subscriptions) {
+            if (!_streamSymTypes.has(sub.symbol)) _streamSymTypes.set(sub.symbol, new Set());
+            _streamSymTypes.get(sub.symbol).add(sub.type);
+          }
+          streamRenderSymList();
+        }
+        return;
+      }
+      if (msg.type === "error") { streamShowError(msg.message); return; }
+      if (msg.type === "subscribed" || msg.type === "unsubscribed") return;
+      streamAppendEvent(msg);
+    } catch {}
+  };
+
+  ws.onerror = () => { streamSetStatus("error", "Connection error"); };
+
+  ws.onclose = () => {
+    _streamWs = null;
+    if (_streamActive) {
+      streamSetStatus("", "Disconnected — retrying…");
+      _streamReconnectTimer = setTimeout(_streamConnectWs, _streamReconnectDelay);
+      _streamReconnectDelay = Math.min(_streamReconnectDelay * 2, 30000);
+    }
+  };
+}
+
+// Returns Promise that resolves when WS is open
+function streamEnsureConnected() {
+  if (_streamWs && _streamWs.readyState === WebSocket.OPEN) return Promise.resolve();
+  _streamConnectWs();
+  const ws = _streamWs;
+  if (!ws) return Promise.reject(new Error("Could not connect"));
+  return new Promise((resolve, reject) => {
+    const cleanup = () => {
+      ws.removeEventListener("open", onOpen);
+      ws.removeEventListener("close", onClose);
+      ws.removeEventListener("error", onError);
+    };
+    const onOpen  = () => { cleanup(); resolve(); };
+    const onClose = () => { cleanup(); reject(new Error("Connection closed")); };
+    const onError = () => { cleanup(); reject(new Error("Connection error")); };
+    ws.addEventListener("open", onOpen);
+    ws.addEventListener("close", onClose);
+    ws.addEventListener("error", onError);
+    if (ws.readyState === WebSocket.OPEN) { cleanup(); resolve(); }
+  });
+}
+
+function _streamPickSymbol(sym) {
+  if (_streamSymTypes.has(sym)) return;
+  _streamPendingSymbol = sym;
+  _streamPendingTypes  = new Set();
+  const wrapper = $("streamAddWrapper");
+  if (wrapper) wrapper.style.display = "none";
+  _renderStreamPending();
+}
+
+function _streamCancelPending() {
+  _streamPendingSymbol = null;
+  _streamPendingTypes  = new Set();
+  const row = $("streamPendingRow");
+  if (row) row.style.display = "none";
+  const wrapper = $("streamAddWrapper");
+  if (wrapper) wrapper.style.display = "inline-block";
+  const inp = $("streamAddInput");
+  if (inp) { inp.value = ""; inp.focus(); }
+  const dd = $("streamAddDropdown");
+  if (dd) dd.classList.remove("open");
+}
+
+function _renderStreamPending() {
+  const row = $("streamPendingRow");
+  if (!row) return;
+  if (!_streamPendingSymbol) { row.style.display = "none"; return; }
+  row.style.display = "flex";
+  const pills = ALL_STREAM_TYPES.map(t => {
+    const active = _streamPendingTypes.has(t);
+    return `<span class="stream-type-pill${active ? ` active-${t}` : ""}"
+      onclick='_streamTogglePendingType(${JSON.stringify(t)})'>${t}</span>`;
+  }).join("");
+  const addBtn = _streamPendingTypes.size > 0
+    ? `<button class="send-btn" onclick="streamCommitPending()" style="padding:5px 14px;font-size:13px;flex-shrink:0">+</button>`
+    : "";
+  row.innerHTML =
+    `<span class="stream-pending-sym">${escapeHtml(_streamPendingSymbol)}</span>` +
+    `<span class="stream-pending-types">${pills}</span>` +
+    addBtn +
+    `<span class="stream-sym-remove" onclick="_streamCancelPending()" title="Cancel" style="margin-left:auto">×</span>`;
+}
+
+function _streamTogglePendingType(type) {
+  _streamPendingTypes.has(type) ? _streamPendingTypes.delete(type) : _streamPendingTypes.add(type);
+  _renderStreamPending();
+}
+
+async function streamCommitPending() {
+  if (!requireKey() || !_streamPendingSymbol || _streamPendingTypes.size === 0) return;
+  const symbol = _streamPendingSymbol;
+  const types  = new Set(_streamPendingTypes);
+  _streamCancelPending(); // clears pending state and restores input
+
+  _streamSymTypes.set(symbol, types);
+  streamRenderSymList();
+  try {
+    await streamEnsureConnected();
+    _streamWs.send(JSON.stringify({ action: "subscribe", subscriptions: [...types].map(t => ({ symbol, type: t })) }));
+  } catch (err) {
+    streamShowError(err.message);
+    _streamSymTypes.delete(symbol);
+    streamRenderSymList();
+  }
+}
+
+function streamToggleType(symbol, type) {
+  const types = _streamSymTypes.get(symbol);
+  if (!types) return;
+  const wasActive = types.has(type);
+  wasActive ? types.delete(type) : types.add(type);
+  // If last type deselected, remove the whole symbol
+  if (types.size === 0) {
+    streamRemoveSymbol(symbol);
+    return;
+  }
+  streamRenderSymList();
+  if (!_streamWs || _streamWs.readyState !== WebSocket.OPEN) return;
+  _streamWs.send(JSON.stringify({
+    action: wasActive ? "unsubscribe" : "subscribe",
+    subscriptions: [{ symbol, type }],
+  }));
+}
+
+function streamRemoveSymbol(symbol) {
+  const types = _streamSymTypes.get(symbol) || new Set();
+  _streamSymTypes.delete(symbol);
+  streamRenderSymList();
+  if (_streamWs && _streamWs.readyState === WebSocket.OPEN && types.size > 0) {
+    _streamWs.send(JSON.stringify({
+      action: "unsubscribe",
+      subscriptions: [...types].map(t => ({ symbol, type: t })),
+    }));
+  }
+}
+
+function streamRenderSymList() {
+  const list = $("streamSymList");
+  if (!list) return;
+  list.innerHTML = "";
+  _streamSymTypes.forEach((types, symbol) => {
+    const row = document.createElement("div");
+    row.className = "stream-sym-row";
+    const pills = ALL_STREAM_TYPES.map(t =>
+      `<span class="stream-type-pill${types.has(t) ? ` active-${t}` : ""}"
+        onclick='streamToggleType(${JSON.stringify(symbol)},${JSON.stringify(t)})'>${t}</span>`
+    ).join("");
+    row.innerHTML = `<span class="stream-sym-name">${escapeHtml(symbol)}</span>` +
+      `<span class="stream-sym-types">${pills}</span>` +
+      `<span class="stream-sym-remove" onclick='streamRemoveSymbol(${JSON.stringify(symbol)})' title="Remove">×</span>`;
+    list.appendChild(row);
+  });
+}
+
+function streamClearFeed() {
+  _streamEventCount = 0;
+  const feed = $("streamFeed");
+  if (feed) feed.innerHTML = `<div class="stream-empty" id="streamEmpty"><span>Feed cleared</span></div>`;
+  const cnt = $("streamCount");
+  if (cnt) cnt.textContent = "0 events";
+}
+
+function streamShowError(msg) {
+  const feed = $("streamFeed");
+  if (!feed) return;
+  const empty = $("streamEmpty"); if (empty) empty.remove();
+  const el = document.createElement("div");
+  el.className = "stream-event";
+  el.innerHTML = `<span style="font-size:10px;font-weight:700;color:var(--red);min-width:72px;">ERROR</span><span style="color:var(--red)">${escapeHtml(msg)}</span>`;
+  feed.insertBefore(el, feed.firstChild);
+}
+
+function streamAppendEvent(ev) {
+  const type = ev.eventType || ev.type || "?";
+  const sym  = ev.eventSymbol || ev.symbol || "";
+
+  // Ignore events for symbols/types no longer subscribed
+  const activeSubs = _streamSymTypes.get(sym);
+  if (!activeSubs || !activeSubs.has(type)) return;
+
+  const feed = $("streamFeed");
+  if (!feed) return;
+  const empty = $("streamEmpty"); if (empty) empty.remove();
+
+  _streamEventCount++;
+  const cnt = $("streamCount");
+  if (cnt) cnt.textContent = `${_streamEventCount.toLocaleString()} event${_streamEventCount !== 1 ? "s" : ""}`;
+
+  const px = (v, dp=2) => v != null ? "$" + parseFloat(v).toFixed(dp) : null;
+  const lbl = (text, extra="") => `<span class="ev-lbl ${extra}">${text}</span>`;
+
+  let dataHtml = "";
+  if (type === "Trade" || type === "TradeETH") {
+    const p = px(ev.price);
+    const v = ev.dayVolume != null ? parseInt(ev.dayVolume).toLocaleString() : null;
+    dataHtml = (p ? `<span class="ev-px">${p}</span>` : "") +
+               (v ? `<span class="ev-vol">vol:${v}</span>` : "");
+  } else if (type === "Quote") {
+    const bidP = ev.bidPrice != null ? parseFloat(ev.bidPrice) : null;
+    const askP = ev.askPrice != null ? parseFloat(ev.askPrice) : null;
+    const bidS = ev.bidSize  != null ? parseInt(ev.bidSize)    : null;
+    const askS = ev.askSize  != null ? parseInt(ev.askSize)    : null;
+    let imb = "";
+    if (bidS != null && askS != null && (bidS + askS) > 0) {
+      const pct = Math.round((bidS - askS) / (bidS + askS) * 100);
+      const cls = pct > 3 ? "pos" : pct < -3 ? "neg" : "neu";
+      imb = `<span class="ev-imb ${cls}">${pct >= 0 ? "+" : ""}${pct}%</span>`;
+    }
+    dataHtml =
+      lbl("bid", "ev-bid") +
+      `<span class="ev-px">${bidP != null ? "$"+bidP.toFixed(2) : "—"}</span>` +
+      `<span class="ev-sz">${bidS != null ? "×"+bidS : ""}</span>` +
+      lbl("ask", "ev-ask") +
+      `<span class="ev-px">${askP != null ? "$"+askP.toFixed(2) : "—"}</span>` +
+      `<span class="ev-sz">${askS != null ? "×"+askS : ""}</span>` +
+      (bidP != null && askP != null ? `<span class="ev-spd">$${(askP-bidP).toFixed(3)}</span>` : "") +
+      imb;
+  } else if (type === "Candle") {
+    const fields = [["O",ev.open],["H",ev.high],["L",ev.low],["C",ev.close]];
+    dataHtml = fields.map(([l,v]) => v != null
+      ? lbl(l) + `<span class="ev-ohlc">$${parseFloat(v).toFixed(2)}</span>`
+      : "").join("");
+  } else if (type === "Summary") {
+    const fields = [["O",ev.dayOpenPrice],["H",ev.dayHighPrice],["L",ev.dayLowPrice]];
+    dataHtml = fields.map(([l,v]) => v != null
+      ? lbl(l) + `<span class="ev-ohlc">$${parseFloat(v).toFixed(2)}</span>`
+      : "").join("");
+  } else if (type === "Order") {
+    const side = ev.side || "";
+    const sideColor = side === "BUY" || side === "BID" ? "ev-bid" : side ? "ev-ask" : "";
+    const p  = ev.price != null ? "$" + parseFloat(ev.price).toFixed(2) : "";
+    const sz = ev.size  != null ? "×" + ev.size : "";
+    dataHtml = (side ? `<span class="ev-lbl ${sideColor}" style="min-width:32px">${side}</span>` : "") +
+               `<span class="ev-px">${p}</span>` +
+               `<span class="ev-sz">${sz}</span>`;
+  } else {
+    dataHtml = `<span style="color:var(--text2)">${escapeHtml(JSON.stringify(ev).slice(0, 120))}</span>`;
+  }
+
+  const ts = ev.time
+    ? new Date(ev.time).toLocaleTimeString([], {hour12:false,hour:"2-digit",minute:"2-digit",second:"2-digit"})
+    : new Date().toLocaleTimeString([], {hour12:false,hour:"2-digit",minute:"2-digit",second:"2-digit"});
+
+  const el = document.createElement("div");
+  el.className = `stream-event event-type-${escapeHtml(type)}`;
+  el.innerHTML = `<span class="stream-event-type">${escapeHtml(type)}</span>` +
+    `<span class="stream-event-sym">${escapeHtml(sym)}</span>` +
+    `<span class="stream-event-data">${dataHtml}</span>` +
+    `<span class="stream-event-ts">${ts}</span>`;
+  feed.insertBefore(el, feed.firstChild);
+  while (feed.children.length > 500) feed.removeChild(feed.lastChild);
+}
+
+// Cleanup when leaving the stream panel
+(function() {
+  const _orig = deselect;
+  deselect = function() {
+    _streamActive        = false;
+    _streamPendingSymbol = null;
+    _streamPendingTypes  = new Set();
+    clearTimeout(_streamReconnectTimer);
+    _streamReconnectTimer = null;
+    if (_streamWs) { try { _streamWs.close(); } catch {} _streamWs = null; }
+    _orig();
+  };
+})();
 
 /* ── Canvas Chart ── */
 
