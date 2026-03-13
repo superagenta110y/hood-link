@@ -15,6 +15,7 @@
 - [💻 Usage](#-usage)
 - [🔍 How It Works](#-how-it-works)
 - [📡 API Endpoints](#-api-endpoints)
+- [📶 Market Stream (WebSocket)](#-market-stream-websocket)
 - [🔒 Security](#-security)
 - [⚠️ Disclaimer](#️-disclaimer)
 
@@ -248,6 +249,112 @@ Because all requests originate from the legitimate authenticated browser tab (wi
 | Method | Path | Description |
 |--------|------|-------------|
 | GET | `/api/v1/status` | Server + bridge status |
+| GET | `/api/v1/stream/status` | Stream connection + active subscriptions |
+| WS | `/api/v1/stream` | Real-time market data stream |
+
+## 📶 Market Stream (WebSocket)
+
+Connect with your API key as a query param:
+
+```
+ws://127.0.0.1:7878/api/v1/stream?api_key=changeme
+```
+
+### Client → Server messages
+
+**Subscribe** to one or more event types:
+
+```json
+{"action": "subscribe", "subscriptions": [
+  {"symbol": "AAPL", "type": "Trade"},
+  {"symbol": "AAPL", "type": "Quote"},
+  {"symbol": "AAPL", "type": "Candle", "from_time": 1773344400000, "instrument_type": "equity"}
+]}
+```
+
+**Unsubscribe:**
+
+```json
+{"action": "unsubscribe", "subscriptions": [
+  {"symbol": "AAPL", "type": "Trade"}
+]}
+```
+
+### Server → Client messages
+
+#### `rh_status` — bridge/stream connection state
+
+Sent immediately on connect and whenever the connection state changes.
+
+```json
+{"type": "rh_status", "connected": true, "subscriptions": [
+  {"symbol": "AAPL", "type": "Trade"},
+  {"symbol": "AAPL", "type": "Quote"}
+]}
+```
+
+#### `subscribed` / `unsubscribed` — acknowledgement
+
+```json
+{"type": "subscribed",   "symbol": "AAPL", "eventType": "Trade"}
+{"type": "unsubscribed", "symbol": "AAPL", "eventType": "Trade"}
+```
+
+#### `error`
+
+```json
+{"type": "error", "message": "bridge not connected"}
+```
+
+#### `Trade` — last sale
+
+```json
+{"eventType": "Trade", "eventSymbol": "AAPL", "price": 213.49, "dayVolume": 47832100, "time": 1773344599807}
+```
+
+#### `TradeETH` — extended-hours last sale
+
+Same fields as `Trade`, emitted during pre/post-market sessions.
+
+```json
+{"eventType": "TradeETH", "eventSymbol": "AAPL", "price": 213.10, "dayVolume": 1204300, "time": 1773344400000}
+```
+
+#### `Quote` — NBBO bid/ask
+
+```json
+{"eventType": "Quote", "eventSymbol": "AAPL",
+ "bidPrice": 213.48, "bidSize": 300, "bidTime": 1773344599700,
+ "askPrice": 213.50, "askSize": 100, "askTime": 1773344599700}
+```
+
+#### `Candle` — OHLCV bar
+
+Subscribe with `"type": "Candle"` and optionally `"from_time"` (epoch ms) and `"instrument_type"` (`"equity"` or `"option"`).
+
+```json
+{"eventType": "Candle", "eventSymbol": "AAPL{=5m}",
+ "eventTime": 1773344400000, "eventFlags": 0,
+ "open": 212.80, "high": 213.60, "low": 212.75, "close": 213.49,
+ "volume": 980200, "impVolatility": 0.2341, "openInterest": 0}
+```
+
+#### `Summary` — daily OHLC summary
+
+```json
+{"eventType": "Summary", "eventSymbol": "AAPL",
+ "dayOpenPrice": 211.50, "dayHighPrice": 214.20,
+ "dayLowPrice": 211.10, "dayClosePrice": 213.49,
+ "openInterest": 0}
+```
+
+#### `Order` — Level 2 order book entry
+
+```json
+{"eventType": "Order", "eventSymbol": "AAPL",
+ "index": 1, "side": "Buy", "price": 213.48, "size": 300,
+ "sequence": 42, "time": 1773344599807, "eventFlags": 0}
+```
 
 ## 🔒 Security
 
