@@ -533,6 +533,29 @@
     height: 100%; color: var(--text2); font-size: 13px; gap: 8px; font-family: inherit;
   }
 
+  /* ── JSON tab ── */
+  .json-feed { flex: 1; overflow-y: auto; font-family: var(--mono); font-size: 12px; padding: 8px 16px; background: var(--surface); }
+  .json-entry { padding: 3px 8px; border-radius: 4px; cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.6; }
+  .json-entry:hover { background: var(--surface2); }
+  .json-ts   { color: #444; margin-right: 6px; }
+  .json-type { font-size: 10px; font-weight: 700; margin-right: 5px; }
+  .json-sym  { color: var(--text); font-weight: 700; margin-right: 8px; }
+  .json-snip { color: #555; }
+  /* JSON modal */
+  .json-modal-bg { position: fixed; inset: 0; background: rgba(0,0,0,0.72); z-index: 1000; display: flex; align-items: center; justify-content: center; }
+  .json-modal { background: #0d0f14; border: 1px solid var(--border); border-radius: 10px; max-width: 820px; width: 92vw; max-height: 82vh; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 24px 80px rgba(0,0,0,0.6); }
+  .json-modal-hdr { display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; border-bottom: 1px solid var(--border); flex-shrink: 0; }
+  .json-modal-title { font-family: var(--mono); font-size: 12px; color: var(--text2); }
+  .json-modal-btns { display: flex; gap: 8px; }
+  .json-modal-btns button { background: none; border: 1px solid var(--border); color: var(--text2); border-radius: 5px; padding: 3px 11px; font-size: 11px; cursor: pointer; font-family: inherit; transition: color 0.1s, border-color 0.1s; }
+  .json-modal-btns button:hover { color: var(--text); border-color: #555; }
+  .json-modal-body { overflow-y: auto; padding: 16px 20px; margin: 0; font-family: var(--mono); font-size: 12.5px; line-height: 1.65; white-space: pre; }
+  /* JSON syntax */
+  .jk    { color: #60a5fa; }
+  .js    { color: #86efac; }
+  .jn    { color: #fb923c; }
+  .jb    { color: #facc15; }
+  .jnull { color: #94a3b8; }
   /* ── Setup page ── */
   .setup-wrap {
     min-height: 100vh; display: flex; flex-direction: column;
@@ -2377,6 +2400,7 @@ function renderStreamPanel(container, ep) {
       <div class="stream-tab-bar">
         <button class="stream-tab-btn active" id="streamTabBtnEvents" onclick="streamSetTab('events')">Events</button>
         <button class="stream-tab-btn" id="streamTabBtnCharts" onclick="streamSetTab('charts')">Charts</button>
+        <button class="stream-tab-btn" id="streamTabBtnJson" onclick="streamSetTab('json')">JSON</button>
         <div style="margin-left:auto;display:flex;align-items:center;gap:12px;font-size:12px;color:var(--text2)">
           <span class="stream-event-count" id="streamCount">0 events</span>
           <button onclick="streamClearFeed()" style="background:none;border:1px solid var(--border);color:var(--text2);padding:3px 10px;border-radius:5px;font-size:11px;cursor:pointer;font-family:inherit;">Clear</button>
@@ -2392,6 +2416,11 @@ function renderStreamPanel(container, ep) {
       </div>
       <div id="streamTabCharts" style="display:none;flex-direction:column;flex:1;overflow:hidden">
         <div id="streamChartsGrid" class="stream-charts-grid"></div>
+      </div>
+      <div id="streamTabJson" style="display:none;flex-direction:column;flex:1;overflow:hidden">
+        <div class="json-feed" id="jsonFeed">
+          <div class="stream-empty" id="jsonEmpty"><span>No events yet</span></div>
+        </div>
       </div>
     </div>`;
   // Wire autocomplete — disable already-subscribed symbols
@@ -2417,12 +2446,14 @@ function streamSetStatus(state, text) {
 
 function streamSetTab(tab) {
   _streamTab = tab;
-  const evEl = $("streamTabEvents"), chEl = $("streamTabCharts");
-  const btnEv = $("streamTabBtnEvents"), btnCh = $("streamTabBtnCharts");
+  const evEl = $("streamTabEvents"), chEl = $("streamTabCharts"), jsEl = $("streamTabJson");
+  const btnEv = $("streamTabBtnEvents"), btnCh = $("streamTabBtnCharts"), btnJs = $("streamTabBtnJson");
   if (evEl)  evEl.style.display  = tab === "events" ? "flex" : "none";
   if (chEl)  chEl.style.display  = tab === "charts" ? "flex" : "none";
+  if (jsEl)  jsEl.style.display  = tab === "json"   ? "flex" : "none";
   if (btnEv) btnEv.classList.toggle("active", tab === "events");
   if (btnCh) btnCh.classList.toggle("active", tab === "charts");
+  if (btnJs) btnJs.classList.toggle("active", tab === "json");
   if (tab === "charts") {
     _scheduleChartRedraw();
     setTimeout(streamUpdateChartSizes, 50);
@@ -2545,11 +2576,6 @@ function streamToggleType(symbol, type) {
   if (!types) return;
   const wasActive = types.has(type);
   wasActive ? types.delete(type) : types.add(type);
-  // If last type deselected, remove the whole symbol
-  if (types.size === 0) {
-    streamRemoveSymbol(symbol);
-    return;
-  }
   if (wasActive) {
     _chartData.delete(`${symbol}|${type}`);
     if (type === "Trade") { _chartData.delete(`${symbol}|TradeETH`); }
@@ -2615,6 +2641,8 @@ function streamClearFeed() {
   _streamEventCount = 0;
   const feed = $("streamFeed");
   if (feed) feed.innerHTML = `<div class="stream-empty" id="streamEmpty"><span>Feed cleared</span></div>`;
+  const jfeed = $("jsonFeed");
+  if (jfeed) jfeed.innerHTML = `<div class="stream-empty" id="jsonEmpty"><span>Feed cleared</span></div>`;
   const cnt = $("streamCount");
   if (cnt) cnt.textContent = "0 events";
 }
@@ -2629,8 +2657,11 @@ const _CHART_META = {
   orderflow: { color: "#f59e0b", label: "Trade Flow" },
   bookmap:   { color: "#e879f9", label: "Bookmap" },
   pressure:  { color: "#06b6d4", label: "Order Flow" },
-  spread:    { color: "#f472b6", label: "Spread" },
+  spread:    { color: "#f472b6", label: "Candle Spread" },
   profile:   { color: "#818cf8", label: "Order Profile" },
+  footprint:   { color: "#a78bfa", label: "Footprint" },
+  bigtrades:   { color: "#fbbf24", label: "Big Trades" },
+  candleflow:  { color: "#60a5fa", label: "Candle Flow" },
 };
 
 // Returns the consolidated chart types to show for a symbol.
@@ -2641,22 +2672,26 @@ function _chartsForSymbol(sym, types) {
   const hasO = types.has("Order");
   const hasC = types.has("Candle");
 
-  // T+Q+O → bookmap absorbs all three (plus Candle shown separately alongside)
-  if (hasT && hasQ && hasO) {
-    return hasC ? ["bookmap", "candle"] : ["bookmap"];
-  }
+  // T+Q+C+O (all 4) → bookmap
+  if (hasT && hasQ && hasO && hasC) return ["bookmap"];
+  // T+Q+O (no candle) → footprint
+  if (hasT && hasQ && hasO) return ["footprint"];
 
   const charts = [];
   let tUsed = false, qUsed = false, oUsed = false, cUsed = false;
 
+  // C+T+Q → bigtrades (before T+Q so it absorbs candle too)
+  if (hasC && hasT && hasQ)                              { charts.push("bigtrades");   cUsed=true; tUsed=true; qUsed=true; }
+  // C+T → candleflow (C and T not yet consumed)
+  if (hasC && hasT && !cUsed && !tUsed)                  { charts.push("candleflow");  cUsed=true; tUsed=true; }
   // T+Q → orderflow
-  if (hasT && hasQ)                        { charts.push("orderflow"); tUsed = true; qUsed = true; }
+  if (hasT && hasQ && !tUsed && !qUsed)                  { charts.push("orderflow");   tUsed=true; qUsed=true; }
   // Q+O → pressure  (Q and O not yet consumed)
-  if (hasQ && hasO && !qUsed && !oUsed)    { charts.push("pressure");  qUsed = true; oUsed = true; }
+  if (hasQ && hasO && !qUsed && !oUsed)                  { charts.push("pressure");  qUsed = true; oUsed = true; }
   // Q+C → spread    (both still free)
-  if (hasQ && hasC && !qUsed && !cUsed)    { charts.push("spread");    qUsed = true; cUsed = true; }
+  if (hasQ && hasC && !qUsed && !cUsed)                  { charts.push("spread");    qUsed = true; cUsed = true; }
   // O+C → profile   (both still free)
-  if (hasO && hasC && !oUsed && !cUsed)    { charts.push("profile");   oUsed = true; cUsed = true; }
+  if (hasO && hasC && !oUsed && !cUsed)                  { charts.push("profile");   oUsed = true; cUsed = true; }
 
   if (hasT && !tUsed) charts.push("trade");
   if (hasQ && !qUsed) charts.push("quote");
@@ -2820,8 +2855,11 @@ function _hasChartData(sym, ct) {
     case "bookmap":  { const b = _orderBook.get(sym); return b != null && (b.bids.size > 0 || b.asks.size > 0); }
     case "pressure": return (_chartData.get(`${sym}|Quote`) || []).filter(d => d.bidPrice != null).length >= 2;
     case "spread":   return (_chartData.get(`${sym}|Candle`) || []).length >= 1 && (_chartData.get(`${sym}|Quote`) || []).filter(d => d.bidPrice != null).length >= 2;
-    case "profile":  { const b = _orderBook.get(sym); return b != null && (b.bids.size + b.asks.size) > 0 && (_chartData.get(`${sym}|Candle`) || []).length >= 1; }
-    default:          return false;
+    case "profile":    { const b = _orderBook.get(sym); return b != null && (b.bids.size + b.asks.size) > 0 && (_chartData.get(`${sym}|Candle`) || []).length >= 1; }
+    case "footprint":   return td().length >= 2;
+    case "bigtrades":   return (_chartData.get(`${sym}|Candle`) || []).length >= 1 && td().length >= 2;
+    case "candleflow":  return (_chartData.get(`${sym}|Candle`) || []).length >= 1 && td().length >= 2;
+    default:           return false;
   }
 }
 
@@ -3047,9 +3085,10 @@ function _attachStatusline(chart, s, ct, sym, wrap) {
     let html = "";
     switch (ct) {
       case "trade": {
-        const cd = param.seriesData.get(s.price);
-        if (!cd) break;
-        html = ohlcv(cd, null);
+        const pd = param.seriesData.get(s.price);
+        const vd = param.seriesData.get(s.volume);
+        if (pd) html += kv("px", px(pd.value));
+        if (vd?.value > 0) html += kvC("vol", Math.round(vd.value).toLocaleString(), C_YLW);
         break;
       }
       case "quote": {
@@ -3104,6 +3143,24 @@ function _attachStatusline(chart, s, ct, sym, wrap) {
         html = ohlcv(cd, param.seriesData.get(s.volume));
         break;
       }
+      case "footprint": {
+        const cd = param.seriesData.get(s.candle);
+        if (!cd) break;
+        html = ohlcv(cd, null);
+        break;
+      }
+      case "bigtrades": {
+        const cd = param.seriesData.get(s.candle);
+        if (!cd) break;
+        html = ohlcv(cd, param.seriesData.get(s.volume));
+        break;
+      }
+      case "candleflow": {
+        const cd = param.seriesData.get(s.candle);
+        if (!cd) break;
+        html = ohlcv(cd, param.seriesData.get(s.volume));
+        break;
+      }
     }
     el.innerHTML = html;
   });
@@ -3121,7 +3178,11 @@ function _createLwChart(wrap, ct, sym) {
         _attachStatusline(chart, s, ct, sym, wrap);
         break;
       case "trade":
-        s.price = chart.addCandlestickSeries({ upColor: "#22c55e", downColor: "#ef4444", borderUpColor: "#22c55e", borderDownColor: "#ef4444", wickUpColor: "#22c55e", wickDownColor: "#ef4444", priceLineVisible: true, lastValueVisible: true });
+        // Tick chart: invisible line + circle markers at each trade price + volume histogram
+        chart.priceScale("right").applyOptions({ scaleMargins: { top: 0.05, bottom: 0.2 } });
+        s.price = chart.addLineSeries({ color: "rgba(0,0,0,0)", lineWidth: 1, priceLineVisible: true, lastValueVisible: true, crosshairMarkerVisible: false });
+        s.volume = chart.addHistogramSeries({ priceScaleId: "volume", color: "#3b82f6", priceLineVisible: false, lastValueVisible: false });
+        chart.priceScale("volume").applyOptions({ scaleMargins: { top: 0.82, bottom: 0 }, visible: false });
         _attachStatusline(chart, s, ct, sym, wrap);
         break;
       case "candle":
@@ -3218,6 +3279,56 @@ function _createLwChart(wrap, ct, sym) {
         s._profileCanvas = profCanvas;
         const redrawProfile = () => _drawProfileStrip(profCanvas, s.candle, sym);
         chart.timeScale().subscribeVisibleLogicalRangeChange(redrawProfile);
+        _attachStatusline(chart, s, ct, sym, wrap);
+        break;
+      }
+      case "footprint": {
+        // Transparent candle outlines + canvas overlay showing per-price-level trade imbalance
+        chart.priceScale("right").applyOptions({ scaleMargins: { top: 0.05, bottom: 0.2 } });
+        s.candle = chart.addCandlestickSeries({
+          upColor: "rgba(34,197,94,0.12)", downColor: "rgba(239,68,68,0.12)",
+          borderUpColor: "rgba(34,197,94,0.55)", borderDownColor: "rgba(239,68,68,0.55)",
+          wickUpColor: "rgba(34,197,94,0.55)", wickDownColor: "rgba(239,68,68,0.55)",
+          priceLineVisible: false, lastValueVisible: false,
+        });
+        s._footprintLevelMap = null;
+        const fpCanvas = document.createElement("canvas");
+        fpCanvas.style.cssText = "position:absolute;top:0;left:0;pointer-events:none;z-index:3";
+        wrap.appendChild(fpCanvas);
+        s._footprintCanvas = fpCanvas;
+        const redrawFp = () => _drawFootprint(fpCanvas, chart, s.candle, s._footprintLevelMap);
+        chart.timeScale().subscribeVisibleLogicalRangeChange(redrawFp);
+        _attachStatusline(chart, s, ct, sym, wrap);
+        break;
+      }
+      case "bigtrades": {
+        // Standard candles + institutional-size trade circles (95th+ pct volume)
+        chart.priceScale("right").applyOptions({ scaleMargins: { top: 0.05, bottom: 0.2 } });
+        s.candle = chart.addCandlestickSeries({ upColor: "#22c55e", downColor: "#ef4444", borderUpColor: "#22c55e", borderDownColor: "#ef4444", wickUpColor: "#22c55e", wickDownColor: "#ef4444", priceLineVisible: false, lastValueVisible: false });
+        s.volume = chart.addHistogramSeries({ priceScaleId: "volume", color: "#3b82f6", priceLineVisible: false, lastValueVisible: false });
+        chart.priceScale("volume").applyOptions({ scaleMargins: { top: 0.82, bottom: 0 }, visible: false });
+        _attachStatusline(chart, s, ct, sym, wrap);
+        break;
+      }
+      case "candleflow": {
+        // Semi-transparent candles + canvas overlay tracing intra-candle trade path
+        chart.priceScale("right").applyOptions({ scaleMargins: { top: 0.05, bottom: 0.2 } });
+        s.candle = chart.addCandlestickSeries({
+          upColor: "rgba(34,197,94,0.2)", downColor: "rgba(239,68,68,0.2)",
+          borderUpColor: "rgba(34,197,94,0.6)", borderDownColor: "rgba(239,68,68,0.6)",
+          wickUpColor: "rgba(34,197,94,0.6)", wickDownColor: "rgba(239,68,68,0.6)",
+          priceLineVisible: false, lastValueVisible: false,
+        });
+        s.volume = chart.addHistogramSeries({ priceScaleId: "volume", color: "#3b82f6", priceLineVisible: false, lastValueVisible: false });
+        chart.priceScale("volume").applyOptions({ scaleMargins: { top: 0.82, bottom: 0 }, visible: false });
+        s._flowTradesByBucket = null;
+        s._flowCandleByT = null;
+        const flowCanvas = document.createElement("canvas");
+        flowCanvas.style.cssText = "position:absolute;top:0;left:0;pointer-events:none;z-index:3";
+        wrap.appendChild(flowCanvas);
+        s._flowCanvas = flowCanvas;
+        const redrawFlow = () => _drawCandleFlow(flowCanvas, chart, s.candle, s._flowTradesByBucket, s._flowCandleByT);
+        chart.timeScale().subscribeVisibleLogicalRangeChange(redrawFlow);
         _attachStatusline(chart, s, ct, sym, wrap);
         break;
       }
@@ -3683,6 +3794,223 @@ function _drawProfileStrip(canvas, candleSeries, sym) {
   ctx.restore();
 }
 
+function _buildLwFootprintData(sym) {
+  const BUCKET = 5;
+  const raw = [...(_chartData.get(`${sym}|Trade`) || []),
+               ...(_chartData.get(`${sym}|TradeETH`) || []).filter(d => !_isMarketHours(d.t))]
+    .filter(d => d.price != null && isFinite(d.price)).sort((a, b) => a.t - b.t);
+  if (!raw.length) return { candles: [], levelMap: new Map() };
+
+  const barMap = new Map();
+  const levelMap = new Map(); // tBucket → Map<priceKey, {price, imbSum, count}>
+  for (const d of raw) {
+    const t = Math.floor(d.t / 1000 / BUCKET) * BUCKET;
+    const b = barMap.get(t);
+    if (!b) {
+      barMap.set(t, { time: t, open: d.price, high: d.price, low: d.price, close: d.price });
+    } else {
+      if (d.price > b.high) b.high = d.price;
+      if (d.price < b.low)  b.low  = d.price;
+      b.close = d.price;
+    }
+    const priceKey = d.price.toFixed(2);
+    if (!levelMap.has(t)) levelMap.set(t, new Map());
+    const lvl = levelMap.get(t);
+    if (!lvl.has(priceKey)) lvl.set(priceKey, { price: d.price, imbSum: 0, count: 0 });
+    const entry = lvl.get(priceKey);
+    entry.count++;
+    if (d.imbalance != null) entry.imbSum += d.imbalance;
+  }
+  const candles = [...barMap.values()].sort((a, b) => a.time - b.time);
+  return { candles, levelMap };
+}
+
+function _drawFootprint(canvas, chart, candleSeries, levelMap) {
+  const wrap = canvas.parentElement;
+  if (!wrap || !chart || !candleSeries || !levelMap || !levelMap.size) return;
+  const rect = wrap.getBoundingClientRect();
+  const W = Math.round(rect.width), H = Math.round(rect.height);
+  if (!W || !H) return;
+  const dpr = window.devicePixelRatio || 1;
+  canvas.width  = Math.round(W * dpr);
+  canvas.height = Math.round(H * dpr);
+  canvas.style.width  = W + "px";
+  canvas.style.height = H + "px";
+
+  const ctx = canvas.getContext("2d");
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.save();
+  ctx.scale(dpr, dpr);
+
+  const tsScale = chart.timeScale();
+  const ts = [...levelMap.keys()].sort((a, b) => a - b);
+
+  // Estimate half bar-width in pixels from adjacent candle x-coords
+  let barHalfW = 4;
+  for (let i = 1; i < ts.length; i++) {
+    const x0 = tsScale.timeToCoordinate(ts[i - 1]);
+    const x1 = tsScale.timeToCoordinate(ts[i]);
+    if (x0 != null && x1 != null && x1 > x0) { barHalfW = Math.max(2, Math.floor((x1 - x0) * 0.45)); break; }
+  }
+
+  // Cell height = one $0.01 tick in pixels, minimum 2px
+  let cellH = 3;
+  try {
+    const ya = candleSeries.priceToCoordinate(100.00);
+    const yb = candleSeries.priceToCoordinate(100.01);
+    if (ya != null && yb != null) cellH = Math.max(2, Math.round(Math.abs(yb - ya)));
+  } catch {}
+
+  for (const t of ts) {
+    const xCenter = tsScale.timeToCoordinate(t);
+    if (xCenter == null || xCenter < -barHalfW * 2 || xCenter > W + barHalfW * 2) continue;
+    const lvls = levelMap.get(t);
+    if (!lvls || !lvls.size) continue;
+    const maxCount = Math.max(...[...lvls.values()].map(l => l.count));
+    if (!maxCount) continue;
+    for (const { price, imbSum, count } of lvls.values()) {
+      const y = candleSeries.priceToCoordinate(price);
+      if (y == null || y < 0 || y > H) continue;
+      const cellW = Math.max(2, Math.round((count / maxCount) * barHalfW * 2));
+      const imb = count > 0 ? imbSum / count : 0;
+      ctx.fillStyle = _imbalanceColor(imb, 0.75);
+      ctx.fillRect(Math.round(xCenter - cellW / 2), Math.round(y) - Math.floor(cellH / 2), cellW, cellH);
+    }
+  }
+  ctx.restore();
+}
+
+function _buildLwBigTradesData(sym) {
+  const cd = _buildLwCandleData(sym);
+  const BUCKET_MS = 300;
+  const raw = [...(_chartData.get(`${sym}|Trade`) || []),
+               ...(_chartData.get(`${sym}|TradeETH`) || []).filter(d => !_isMarketHours(d.t))]
+    .filter(d => d.price != null && isFinite(d.price)).sort((a, b) => a.t - b.t);
+  if (!raw.length) return { ...cd, markers: [] };
+
+  const bucketMap = new Map();
+  for (const d of raw) {
+    const idx = Math.floor(d.t / BUCKET_MS);
+    const tSec = idx * BUCKET_MS / 1000;
+    const b = bucketMap.get(idx);
+    if (!b) {
+      bucketMap.set(idx, { tSec, price: d.price, volEnd: d.volume ?? 0, count: 1,
+        imbSum: d.imbalance ?? 0, imbCount: d.imbalance != null ? 1 : 0 });
+    } else {
+      b.price = d.price;
+      b.volEnd = d.volume ?? b.volEnd;
+      b.count++;
+      if (d.imbalance != null) { b.imbSum += d.imbalance; b.imbCount++; }
+    }
+  }
+  const buckets = [...bucketMap.values()].sort((a, b) => a.tSec - b.tSec);
+  const volDeltas = buckets.map((b, i) => {
+    if (i === 0) return b.count;
+    const delta = b.volEnd - buckets[i - 1].volEnd;
+    return (isFinite(delta) && delta > 0) ? delta : b.count;
+  });
+
+  // 95th-pct threshold = "institutional"
+  const vSorted = [...volDeltas].filter(v => v > 0).sort((a, b) => a - b);
+  const p95 = vSorted[Math.floor(vSorted.length * 0.95)] || vSorted[vSorted.length - 1] || 1;
+
+  const markers = [];
+  for (let i = 0; i < buckets.length; i++) {
+    const vol = volDeltas[i];
+    if (vol < p95) continue;
+    const b = buckets[i];
+    const sz = Math.max(2, Math.min(5, Math.round((vol / p95) * 3) + 2));
+    const imb = b.imbCount > 0 ? b.imbSum / b.imbCount :
+      (i > 0 && b.price >= buckets[i - 1].price ? 0.1 : -0.1);
+    markers.push({ time: b.tSec, position: "inBar", shape: "circle", size: sz, color: _imbalanceColor(imb, 0.9) });
+  }
+  return { candles: cd.candles, volume: cd.volume, markers };
+}
+
+function _buildLwCandleFlowData(sym) {
+  const cd = _buildLwCandleData(sym);
+  const BUCKET = 5;
+  const raw = [...(_chartData.get(`${sym}|Trade`) || []),
+               ...(_chartData.get(`${sym}|TradeETH`) || []).filter(d => !_isMarketHours(d.t))]
+    .filter(d => d.price != null && isFinite(d.price)).sort((a, b) => a.t - b.t);
+  const tradesByBucket = new Map();
+  for (const d of raw) {
+    const t = Math.floor(d.t / 1000 / BUCKET) * BUCKET;
+    if (!tradesByBucket.has(t)) tradesByBucket.set(t, []);
+    tradesByBucket.get(t).push({ ms: d.t, price: d.price });
+  }
+  const candleByT = new Map();
+  for (const c of cd.candles) candleByT.set(c.time, c);
+  return { candles: cd.candles, volume: cd.volume, tradesByBucket, candleByT };
+}
+
+function _drawCandleFlow(canvas, chart, candleSeries, tradesByBucket, candleByT) {
+  const wrap = canvas.parentElement;
+  if (!wrap || !chart || !candleSeries) return;
+  const rect = wrap.getBoundingClientRect();
+  const W = Math.round(rect.width), H = Math.round(rect.height);
+  if (!W || !H) return;
+  const dpr = window.devicePixelRatio || 1;
+  canvas.width  = Math.round(W * dpr);
+  canvas.height = Math.round(H * dpr);
+  canvas.style.width  = W + "px";
+  canvas.style.height = H + "px";
+
+  const ctx = canvas.getContext("2d");
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  if (!tradesByBucket || !tradesByBucket.size || !candleByT) return;
+  ctx.save();
+  ctx.scale(dpr, dpr);
+
+  const tsScale = chart.timeScale();
+  const ts = [...tradesByBucket.keys()].sort((a, b) => a - b);
+
+  // Estimate bar half-width in pixels
+  let barHalfW = 4;
+  for (let i = 1; i < ts.length; i++) {
+    const x0 = tsScale.timeToCoordinate(ts[i - 1]);
+    const x1 = tsScale.timeToCoordinate(ts[i]);
+    if (x0 != null && x1 != null && x1 > x0) { barHalfW = Math.max(2, Math.floor((x1 - x0) * 0.45)); break; }
+  }
+
+  const BUCKET_MS = 5000;
+  ctx.lineWidth = 1.5;
+
+  for (const t of ts) {
+    const xCenter = tsScale.timeToCoordinate(t);
+    if (xCenter == null || xCenter < -barHalfW * 2 || xCenter > W + barHalfW * 2) continue;
+    const trades = tradesByBucket.get(t);
+    const candle = candleByT.get(t);
+    if (!trades || !trades.length || !candle) continue;
+
+    const xLeft  = xCenter - barHalfW;
+    const xRight = xCenter + barHalfW;
+    const barW   = barHalfW * 2;
+    const isUp   = candle.close >= candle.open;
+    ctx.strokeStyle = isUp ? "rgba(34,197,94,0.7)" : "rgba(239,68,68,0.7)";
+
+    ctx.beginPath();
+    // Start at candle open (left edge)
+    const yOpen = candleSeries.priceToCoordinate(candle.open);
+    if (yOpen == null) continue;
+    ctx.moveTo(xLeft, yOpen);
+
+    // Trace each trade in time order within the candle width
+    for (const { ms, price } of trades) {
+      const progress = Math.min(1, Math.max(0, (ms - t * 1000) / BUCKET_MS));
+      const x = xLeft + progress * barW;
+      const y = candleSeries.priceToCoordinate(price);
+      if (y != null) ctx.lineTo(x, y);
+    }
+
+    // End at candle close (right edge)
+    const yClose = candleSeries.priceToCoordinate(candle.close);
+    if (yClose != null) ctx.lineTo(xRight, yClose);
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+
 function _updateLwChartData(inst, sym, ct) {
   try {
     const { s } = inst;
@@ -3694,8 +4022,9 @@ function _updateLwChartData(inst, sym, ct) {
         break;
       }
       case "trade": {
-        const ticks = _buildLwTickCandleData(sym);
-        if (ticks.length) s.price.setData(ticks);
+        const od = _buildLwOrderflowData(sym);
+        if (od.lineData.length) { s.price.setData(od.lineData); s.price.setMarkers(od.markers); }
+        if (od.volumeData.length) s.volume.setData(od.volumeData);
         break;
       }
       case "candle": {
@@ -3748,6 +4077,29 @@ function _updateLwChartData(inst, sym, ct) {
         if (s._profileCanvas) requestAnimationFrame(() => _drawProfileStrip(s._profileCanvas, s.candle, sym));
         break;
       }
+      case "footprint": {
+        const fd = _buildLwFootprintData(sym);
+        if (fd.candles.length) s.candle.setData(fd.candles);
+        s._footprintLevelMap = fd.levelMap;
+        if (s._footprintCanvas) requestAnimationFrame(() => _drawFootprint(s._footprintCanvas, inst.chart, s.candle, s._footprintLevelMap));
+        break;
+      }
+      case "bigtrades": {
+        const btd = _buildLwBigTradesData(sym);
+        if (btd.candles.length) s.candle.setData(btd.candles);
+        if (btd.volume.length) s.volume.setData(btd.volume);
+        if (btd.markers.length) s.candle.setMarkers(btd.markers);
+        break;
+      }
+      case "candleflow": {
+        const cfd = _buildLwCandleFlowData(sym);
+        if (cfd.candles.length) s.candle.setData(cfd.candles);
+        if (cfd.volume.length) s.volume.setData(cfd.volume);
+        s._flowTradesByBucket = cfd.tradesByBucket;
+        s._flowCandleByT = cfd.candleByT;
+        if (s._flowCanvas) requestAnimationFrame(() => _drawCandleFlow(s._flowCanvas, inst.chart, s.candle, s._flowTradesByBucket, s._flowCandleByT));
+        break;
+      }
     }
     if (inst.chart) inst.chart.timeScale().fitContent();
   } catch (e) { console.error("[HoodLink] chart update error:", e); }
@@ -3761,6 +4113,51 @@ function streamShowError(msg) {
   el.className = "stream-event";
   el.innerHTML = `<span style="font-size:10px;font-weight:700;color:var(--red);min-width:72px;">ERROR</span><span style="color:var(--red)">${escapeHtml(msg)}</span>`;
   feed.insertBefore(el, feed.firstChild);
+}
+
+function _colorizeJson(obj) {
+  const safe = JSON.stringify(obj, null, 2)
+    .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  return safe.replace(
+    /("(?:\\u[0-9a-fA-F]{4}|\\[^u]|[^\\"])*"(\s*:)?|true|false|null|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g,
+    (m) => {
+      if (m[0] === '"') return m.endsWith(':') ? `<span class="jk">${m}</span>` : `<span class="js">${m}</span>`;
+      if (m === 'true' || m === 'false') return `<span class="jb">${m}</span>`;
+      if (m === 'null') return `<span class="jnull">${m}</span>`;
+      return `<span class="jn">${m}</span>`;
+    }
+  );
+}
+
+function _showJsonModal(ev, label) {
+  const existing = document.querySelector(".json-modal-bg");
+  if (existing) existing.remove();
+  const jsonStr = JSON.stringify(ev, null, 2);
+  const bg = document.createElement("div");
+  bg.className = "json-modal-bg";
+  bg.onclick = (e) => { if (e.target === bg) bg.remove(); };
+  bg.innerHTML = `
+    <div class="json-modal">
+      <div class="json-modal-hdr">
+        <span class="json-modal-title">${escapeHtml(label || "")}</span>
+        <div class="json-modal-btns">
+          <button id="jsonModalCopyBtn">copy</button>
+          <button onclick="this.closest('.json-modal-bg').remove()">×</button>
+        </div>
+      </div>
+      <pre class="json-modal-body">${_colorizeJson(ev)}</pre>
+    </div>`;
+  bg.querySelector("#jsonModalCopyBtn").onclick = () => {
+    navigator.clipboard.writeText(jsonStr).then(() => {
+      const btn = bg.querySelector("#jsonModalCopyBtn");
+      btn.textContent = "copied!";
+      setTimeout(() => { btn.textContent = "copy"; }, 1500);
+    });
+  };
+  document.addEventListener("keydown", function esc(e) {
+    if (e.key === "Escape") { bg.remove(); document.removeEventListener("keydown", esc); }
+  });
+  document.body.appendChild(bg);
 }
 
 function streamAppendEvent(ev) {
@@ -3919,6 +4316,25 @@ function streamAppendEvent(ev) {
     `<span class="stream-event-ts">${ts}</span>`;
   feed.insertBefore(el, feed.firstChild);
   while (feed.children.length > 500) feed.removeChild(feed.lastChild);
+
+  // ── JSON tab feed ────────────────────────────────────────────────────────
+  const jfeed = $("jsonFeed");
+  if (jfeed) {
+    const je = $("jsonEmpty"); if (je) je.remove();
+    const typeColor = { Trade:"#22c55e", TradeETH:"#4ade80", Quote:"#3b82f6", Candle:"#fb923c", Order:"#a855f7" };
+    const snip = JSON.stringify(ev).slice(0, 160);
+    const jEl = document.createElement("div");
+    jEl.className = "json-entry";
+    jEl.innerHTML = `<span class="json-ts">${ts}</span>` +
+      `<span class="json-type" style="color:${typeColor[type]||"#888"}">${escapeHtml(type)}</span>` +
+      `<span class="json-sym">${escapeHtml(sym)}</span>` +
+      `<span class="json-snip">${escapeHtml(snip)}</span>`;
+    const label = `${type} · ${sym} · ${ts}`;
+    jEl._ev = ev;
+    jEl.onclick = () => _showJsonModal(jEl._ev, label);
+    jfeed.insertBefore(jEl, jfeed.firstChild);
+    while (jfeed.children.length > 500) jfeed.removeChild(jfeed.lastChild);
+  }
 }
 
 // Cleanup when leaving the stream panel

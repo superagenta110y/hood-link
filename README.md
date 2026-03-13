@@ -356,6 +356,36 @@ Subscribe with `"type": "Candle"` and optionally `"from_time"` (epoch ms) and `"
  "sequence": 42, "time": 1773344599807, "eventFlags": 0}
 ```
 
+### Dashboard Visualizations
+
+The dashboard automatically selects a chart type based on which event types you subscribe to for a symbol. Combining subscriptions unlocks richer composite views.
+
+#### Single subscriptions
+
+| Subscriptions | Chart | Description |
+|---|---|---|
+| `Quote` | **Quote** | Live NBBO bid (green) and ask (red) lines. Markers indicate bid/ask size imbalance. |
+| `Trade` | **Trade** | Tick markers with a volume histogram below, colored green/red by trade imbalance. |
+| `Candle` | **Candle** | 5-second OHLCV candlesticks with a volume histogram colored by direction. |
+| `Order` | **Price Ladder** | Custom DOM (depth-of-market) canvas showing live bid/ask levels in a three-column price ladder. Best bid/ask are highlighted; spread rows are yellow. |
+
+#### Combo subscriptions
+
+Subscribing to multiple types for the same symbol merges them into a single composite chart instead of showing each separately.
+
+| Subscriptions | Chart | Description |
+|---|---|---|
+| `Quote` + `Trade` | **Trade Flow** | Trade price line with a volume-delta histogram below. Bubble markers sized by volume percentile and colored by bucket imbalance. |
+| `Quote` + `Order` | **Pressure** | Bid/ask lines with up to 20 order-book liquidity levels overlaid. A pressure bubble tracks the size-weighted midpoint between bid and ask, visualizing real-time order imbalance. |
+| `Quote` + `Candle` | **Spread** | Upper 60%: 5-second candles with bid/ask lines overlaid. Lower 40%: spread-width imbalance histogram (green = bid-heavy, red = ask-heavy). |
+| `Order` + `Candle` | **Order Profile** | 5-second OHLC candles with a right-edge depth profile strip showing bid (green) and ask (red) order levels within ±2% of the current mid price. |
+| `Candle` + `Trade` | **Candle Flow** | Semi-transparent 5-second candles with a canvas overlay tracing the intra-candle trade path — lines connect each tick from open to close, colored by direction. Volume histogram below. |
+| `Quote` + `Trade` + `Order` | **Footprint** | Semi-transparent candle outlines with a canvas overlay showing per-price-level trade imbalance inside each bar. Combines order book context with tick-level aggression. |
+| `Candle` + `Trade` + `Quote` | **Big Trades** | 5-second OHLC candles with volume histogram. Circle markers highlight trades at or above the 95th-percentile volume threshold — institutional-size prints. |
+| `Quote` + `Trade` + `Order` + `Candle` | **Bookmap** | 5-second candlesticks with up to 40 liquidity levels rendered as intensity-colored horizontal lines behind price. A volume histogram runs below. Trade imbalance markers appear on each candle. |
+
+> **Note:** When a combo chart is active, its constituent subscriptions are absorbed into it — they do not also appear as separate charts. For example, `Quote + Order` produces only the Pressure chart, not separate Quote and Order ladder charts.
+
 ## 🔒 Security
 
 HoodLink runs a plain **HTTP** server — there is no TLS/HTTPS. This means traffic between your client and the server is unencrypted and should never be exposed to the internet or untrusted networks.
