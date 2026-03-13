@@ -573,7 +573,7 @@
     </div>
 
     <div id="reconnectBlock" style="display:none;" class="setup-reconnect">
-      <p>Extension detected — open a Robinhood tab in Chrome to reconnect. You’ll be redirected automatically.</p>
+      <p>Extension is installed — open a Robinhood tab in Chrome to connect. You'll be redirected automatically.</p>
     </div>
   </div>
 </div>
@@ -2370,10 +2370,9 @@ function showConnectedModal() {
 function renderAppMode({ connected }) {
   const setup = $("setupView");
   const dash = $("dashboardView");
-  const installedBefore = localStorage.getItem("hoodlink_extension_seen") === "1";
+  const extensionInstalled = document.documentElement.dataset.hoodlinkExtension === "1";
 
   if (connected) {
-    localStorage.setItem("hoodlink_extension_seen", "1");
     if (setup) setup.style.display = "none";
     if (dash) dash.style.display = "block";
     setRoute("/");
@@ -2385,8 +2384,8 @@ function renderAppMode({ connected }) {
     const installSteps = $("installStepsBlock");
     const reconnect = $("reconnectBlock");
     if (installSteps && reconnect) {
-      installSteps.style.display = installedBefore ? "none" : "block";
-      reconnect.style.display = installedBefore ? "block" : "none";
+      installSteps.style.display = extensionInstalled ? "none" : "block";
+      reconnect.style.display = extensionInstalled ? "block" : "none";
     }
   }
 

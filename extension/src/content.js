@@ -1,7 +1,13 @@
-// Content script — runs on robinhood.com pages
+// Content script — runs on robinhood.com pages and the HoodLink dashboard
 // Manages WebSocket to HoodLink server and message routing to/from inject.js
 
 (function () {
+  // On the dashboard: stamp presence so the page can detect the extension is installed
+  if (location.hostname === "127.0.0.1" || location.hostname === "localhost") {
+    document.documentElement.dataset.hoodlinkExtension = "1";
+    return;
+  }
+
   const RECONNECT_BASE_DELAY = 1000;
   const RECONNECT_MAX_DELAY = 30000;
 

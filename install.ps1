@@ -40,4 +40,3 @@ Write-Host ""
 Write-Host "To install the Chrome extension: open chrome://extensions/, enable Developer mode,"
 Write-Host "then click 'Load unpacked' and select the extension folder above."
 Write-Host ""
-Start-Process 'http://127.0.0.1:7878'

@@ -9,7 +9,9 @@
     "storage"
   ],
   "host_permissions": [
-    "*://*.robinhood.com/*"
+    "*://*.robinhood.com/*",
+    "http://127.0.0.1:7878/*",
+    "http://localhost:7878/*"
   ],
   "background": {
     "service_worker": "src/background.js"
@@ -19,6 +21,11 @@
       "matches": ["https://*.robinhood.com/*"],
       "js": ["src/content.js"],
       "run_at": "document_idle"
+    },
+    {
+      "matches": ["http://127.0.0.1:7878/*", "http://localhost:7878/*"],
+      "js": ["src/content.js"],
+      "run_at": "document_start"
     }
   ],
   "web_accessible_resources": [
