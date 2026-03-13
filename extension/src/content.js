@@ -1,5 +1,5 @@
 // Content script — runs on robinhood.com pages
-// Manages WebSocket to Hood-link server and message routing to/from inject.js
+// Manages WebSocket to HoodLink server and message routing to/from inject.js
 
 (function () {
   const RECONNECT_BASE_DELAY = 1000;
@@ -51,7 +51,7 @@
     }
 
     ws.onopen = () => {
-      console.log("[Hood-link] Connected to server");
+      console.log("[HoodLink] Connected to server");
       reconnectDelay = RECONNECT_BASE_DELAY;
       updateStatus(true);
     };
@@ -62,12 +62,12 @@
         const msg = JSON.parse(event.data);
         window.postMessage({ source: "hoodlink-content", payload: msg }, "*");
       } catch (e) {
-        console.error("[Hood-link] Failed to parse server message:", e);
+        console.error("[HoodLink] Failed to parse server message:", e);
       }
     };
 
     ws.onclose = () => {
-      console.log("[Hood-link] Disconnected from server");
+      console.log("[HoodLink] Disconnected from server");
       ws = null;
       updateStatus(false);
       if (enabled) scheduleReconnect();

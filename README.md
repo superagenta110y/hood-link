@@ -1,8 +1,8 @@
 <p align="center">
-  <img src="logo.svg" alt="Hood-link" width="100" />
+  <img src="logo.svg" alt="HoodLink" width="100" />
 </p>
 
-<h1 align="center">Hood-link</h1>
+<h1 align="center">HoodLink</h1>
 
 <p align="center">⚡ Local bridge to Robinhood's private API via a Chrome extension and a FastAPI server. ⚡</p>
 
@@ -37,7 +37,7 @@ curl -fsSL https://raw.githubusercontent.com/superagenta110y/hood-link/main/inst
 iex ((New-Object Net.WebClient).DownloadString('https://raw.githubusercontent.com/superagenta110y/hood-link/main/install.ps1'))
 ```
 
-These scripts download the latest repo zip, install dependencies, start the local server, and open Hood-link in your browser.
+These scripts download the latest repo zip, install dependencies, start the local server, and open HoodLink in your browser.
 
 ## 📦 Prebuilt binaries (GitHub Releases)
 
@@ -53,8 +53,8 @@ Each bundle includes the server executable, the `extension/` folder, `README.md`
 
 Download a release bundle from the [Releases page](https://github.com/superagenta110y/hood-link/releases), unzip it, and run the executable:
 
-- **Windows:** double-click `hood-link-server.exe`, or run it from PowerShell
-- **macOS / Linux:** `./hood-link-server`
+- **Windows:** double-click `hoodlink-server.exe`, or run it from PowerShell
+- **macOS / Linux:** `./hoodlink-server`
 
 The dashboard opens automatically at http://127.0.0.1:7878.
 
@@ -84,7 +84,7 @@ uv run uvicorn hoodlink.main:app --host 127.0.0.1 --port 7878
 
 The dashboard UI is available at http://localhost:7878.
 
-When the server starts, Hood-link automatically opens a browser tab. If the extension bridge is not connected yet, you'll be routed to `/setup` onboarding. Once the extension is detected on an active Robinhood tab, Hood-link automatically switches to the main dashboard.
+When the server starts, HoodLink automatically opens a browser tab. If the extension bridge is not connected yet, you'll be routed to `/setup` onboarding. Once the extension is detected on an active Robinhood tab, HoodLink automatically switches to the main dashboard.
 
 ### 2. Chrome Extension
 
@@ -187,7 +187,7 @@ You can also use the built-in dashboard at http://localhost:7878 which provides 
 ```
                 ┌─────────────────┐          ┌──────────────────┐          ┌─────────────────┐
                 │                 │  REST /   │                  │          │                 │
-                │     Client      │  WebSocket│  Hood-link Server │    WS    │ Chrome Extension│
+                │     Client      │  WebSocket│  HoodLink Server │    WS    │ Chrome Extension│
                 │  (your code)    ├──────────►│    (FastAPI)     ├─────────►│  (robinhood.com)│
                 │                 │           │                  │          │                 │
                 └────────┬────────┘          └────────┬─────────┘          └────────┬────────┘
@@ -251,15 +251,15 @@ Because all requests originate from the legitimate authenticated browser tab (wi
 
 ## 🔒 Security
 
-Hood-link runs a plain **HTTP** server — there is no TLS/HTTPS. This means traffic between your client and the server is unencrypted and should never be exposed to the internet or untrusted networks.
+HoodLink runs a plain **HTTP** server — there is no TLS/HTTPS. This means traffic between your client and the server is unencrypted and should never be exposed to the internet or untrusted networks.
 
 **Recommended usage:**
 
-- Run Hood-link only on `127.0.0.1` (localhost, the default) for single-machine use, or on a **private LAN** you control
+- Run HoodLink only on `127.0.0.1` (localhost, the default) for single-machine use, or on a **private LAN** you control
 - Never bind to `0.0.0.0` or forward port 7878 through a router or firewall
 - If you need remote access, put it behind a reverse proxy with TLS (e.g. Caddy, nginx) or use a VPN
 
-**API key:** All non-status endpoints require the `X-API-Key` header. Within a trusted LAN this provides meaningful access control — only clients with the key can invoke trades or read account data. If no key is configured, Hood-link automatically generates a strong random key tied to the machine at startup, so there is no weak default to worry about.
+**API key:** All non-status endpoints require the `X-API-Key` header. Within a trusted LAN this provides meaningful access control — only clients with the key can invoke trades or read account data. If no key is configured, HoodLink automatically generates a strong random key tied to the machine at startup, so there is no weak default to worry about.
 
 The extension-to-server WebSocket connection is local-only and not exposed to the internet.
 
@@ -267,9 +267,9 @@ The extension-to-server WebSocket connection is local-only and not exposed to th
 
 This project is provided strictly for **educational and demonstrational purposes**.
 
-By using Hood-link, you acknowledge and agree that:
+By using HoodLink, you acknowledge and agree that:
 
 - You are solely responsible for how you use this software.
 - Trading can result in financial loss, including losses from automation mistakes.
-- The Hood-link developers are **not responsible or liable** for misuse, account issues, service disruptions, losses, or any unintended trades.
+- The HoodLink developers are **not responsible or liable** for misuse, account issues, service disruptions, losses, or any unintended trades.
 - You should review all actions carefully and use this software at your own risk.

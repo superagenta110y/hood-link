@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "Hood-link",
+  "name": "HoodLink",
   "version": "0.2.0",
-  "description": "Bridge between Hood-link server and Robinhood Legend",
+  "description": "Bridge between HoodLink server and Robinhood Legend",
   "permissions": [
     "activeTab",
     "scripting",
@@ -29,7 +29,7 @@
   ],
   "action": {
     "default_popup": "src/popup/popup.html",
-    "default_title": "Hood-link",
+    "default_title": "HoodLink",
     "default_icon": {
       "16": "icons/icon16.png",
       "48": "icons/icon48.png",

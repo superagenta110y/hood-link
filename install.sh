@@ -8,7 +8,7 @@ WORK_DIR="${INSTALL_DIR}/hood-link-main"
 mkdir -p "$INSTALL_DIR"
 TMP_ZIP="$(mktemp -t hoodlink.XXXXXX).zip"
 
-echo "Downloading Hood-link..."
+echo "Downloading HoodLink..."
 curl -fsSL "$REPO_ZIP_URL" -o "$TMP_ZIP"
 
 if [ -d "$WORK_DIR" ]; then
@@ -32,4 +32,17 @@ cd "$WORK_DIR/server"
 uv sync
 nohup uv run uvicorn hoodlink.main:app --host 127.0.0.1 --port 7878 >/tmp/hoodlink.log 2>&1 &
 
-echo "Hood-link started. Open: http://127.0.0.1:7878"
+echo ""
+echo "HoodLink started."
+echo "  Dashboard : http://127.0.0.1:7878"
+echo "  Extension : $WORK_DIR/extension"
+echo ""
+echo "To install the Chrome extension: open chrome://extensions/, enable Developer mode,"
+echo "then click 'Load unpacked' and select the extension folder above."
+echo ""
+
+if command -v open >/dev/null 2>&1; then
+  open http://127.0.0.1:7878
+elif command -v xdg-open >/dev/null 2>&1; then
+  xdg-open http://127.0.0.1:7878
+fi

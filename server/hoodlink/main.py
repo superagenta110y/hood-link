@@ -25,7 +25,7 @@ async def lifespan(app: FastAPI):
         format="%(asctime)s %(levelname)s %(name)s: %(message)s",
     )
     logger = logging.getLogger(__name__)
-    logger.info("Hood-link server starting on %s:%d", settings.host, settings.port)
+    logger.info("HoodLink server starting on %s:%d", settings.host, settings.port)
     print(f"  API key : {settings.api_key}", file=sys.stderr, flush=True)
     print( "  Set HOODLINK_API_KEY or use --api-key to change\n", file=sys.stderr, flush=True)
 
@@ -41,7 +41,7 @@ async def lifespan(app: FastAPI):
     yield
 
 
-app = FastAPI(title="Hood-link", version="0.4.0", lifespan=lifespan)
+app = FastAPI(title="HoodLink", version="0.4.0", lifespan=lifespan)
 
 # Bridge WebSocket (no API key — extension connects over localhost)
 @app.websocket("/bridge")

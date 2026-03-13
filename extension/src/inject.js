@@ -98,5 +98,5 @@
     }
   });
 
-  console.log("[Hood-link] Inject script loaded — intercepting auth tokens");
+  console.log("[HoodLink] Inject script loaded — intercepting auth tokens");
 })();

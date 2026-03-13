@@ -6,7 +6,7 @@ $ZipPath = Join-Path $env:TEMP 'hood-link-main.zip'
 
 New-Item -ItemType Directory -Force -Path $InstallDir | Out-Null
 
-Write-Host 'Downloading Hood-link...'
+Write-Host 'Downloading HoodLink...'
 Invoke-WebRequest -Uri $RepoZipUrl -OutFile $ZipPath
 
 $WorkDir = Join-Path $InstallDir 'hood-link-main'
@@ -31,5 +31,13 @@ if (-not (Get-Command uv -ErrorAction SilentlyContinue)) {
 uv sync
 Start-Process -FilePath 'uv' -ArgumentList @('run','uvicorn','hoodlink.main:app','--host','127.0.0.1','--port','7878')
 
-Write-Host 'Hood-link started. Opening browser...'
+$ExtensionDir = Join-Path $WorkDir 'extension'
+Write-Host ""
+Write-Host "HoodLink started."
+Write-Host "  Dashboard : http://127.0.0.1:7878"
+Write-Host "  Extension : $ExtensionDir"
+Write-Host ""
+Write-Host "To install the Chrome extension: open chrome://extensions/, enable Developer mode,"
+Write-Host "then click 'Load unpacked' and select the extension folder above."
+Write-Host ""
 Start-Process 'http://127.0.0.1:7878'

@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Hood-link</title>
+<title>HoodLink</title>
 <link rel="icon" href="/logo.svg" type="image/svg+xml">
 <meta name="theme-color" content="#0a0a0a">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -542,9 +542,9 @@
 <div id="setupView" style="display:none;">
   <div class="setup-wrap">
     <div class="setup-logo">
-      <img src="/logo.svg" alt="Hood-link">
+      <img src="/logo.svg" alt="HoodLink">
     </div>
-    <h1 class="setup-title">Hood-link</h1>
+    <h1 class="setup-title">HoodLink</h1>
     <p class="setup-subtitle">Server is running — complete these steps to connect.</p>
     <span id="setupStatusBadge" class="setup-badge">Waiting for extension</span>
 
@@ -560,14 +560,14 @@
         <span class="step-num">02</span>
         <div class="step-content">
           <h3>Load the Extension</h3>
-          <p>Drag the <code>extension/</code> folder into the page, or click <strong>Load unpacked</strong> and select it.</p>
+          <p>Click <strong>Load unpacked</strong> and select the <code>extension/</code> folder. If you used the one-line installer it's at <code>~/.hoodlink/hood-link-main/extension</code> (macOS/Linux) or <code>%USERPROFILE%\.hoodlink\hood-link-main\extension</code> (Windows).</p>
         </div>
       </div>
       <div class="setup-step">
         <span class="step-num">03</span>
         <div class="step-content">
           <h3>Open Robinhood</h3>
-          <p>Visit <code>robinhood.com</code>, log in, and activate the Hood-link extension on that tab.</p>
+          <p>Visit <code>robinhood.com</code>, log in, and activate the HoodLink extension on that tab.</p>
         </div>
       </div>
     </div>
@@ -582,9 +582,9 @@
 <header>
   <div class="header-left" onclick="deselect()" style="cursor:pointer;">
     <div class="logo">
-      <img src="/logo.svg" width="28" height="28" alt="Hood-link" style="display:block;transition:filter 0.2s;">
+      <img src="/logo.svg" width="28" height="28" alt="HoodLink" style="display:block;transition:filter 0.2s;">
     </div>
-    <h1 style="transition:color 0.2s;">Hood-link</h1>
+    <h1 style="transition:color 0.2s;">HoodLink</h1>
   </div>
   <div class="header-right">
     <div class="status-dot" id="statusDot" title="Bridge disconnected"></div>
@@ -701,7 +701,7 @@ function openHelp() {
   document.getElementById("helpContent").innerHTML = `
   <div style="display:flex;align-items:center;gap:12px;margin-bottom:6px;">
     <img src="/logo.svg" width="30" height="30" alt="" style="display:block;filter:url(#logo-accent);">
-    <h2 style="margin:0;">Hood-link</h2>
+    <h2 style="margin:0;">HoodLink</h2>
   </div>
   <p style="color:var(--text2);margin-bottom:24px;">A bridge that exposes Robinhood's private API as a clean local REST &amp; WebSocket server.</p>
 
@@ -714,10 +714,10 @@ function openHelp() {
     <rect x="8" y="35" width="148" height="52" rx="7" fill="#141414" stroke="#333" stroke-width="1.2"/>
     <text x="82" y="56" text-anchor="middle" font-size="10" fill="#555" font-family="Inter,sans-serif">your code</text>
     <text x="82" y="75" text-anchor="middle" font-size="12" fill="#ccc" font-weight="600" font-family="Inter,sans-serif">Client</text>
-    <!-- Hood-link Server -->
+    <!-- HoodLink Server -->
     <rect x="206" y="35" width="178" height="52" rx="7" fill="#141414" stroke="#a3e63550" stroke-width="1.2"/>
     <text x="295" y="56" text-anchor="middle" font-size="10" fill="#555" font-family="Inter,sans-serif">localhost:7878</text>
-    <text x="295" y="75" text-anchor="middle" font-size="12" fill="#ccc" font-weight="600" font-family="Inter,sans-serif">Hood-link Server</text>
+    <text x="295" y="75" text-anchor="middle" font-size="12" fill="#ccc" font-weight="600" font-family="Inter,sans-serif">HoodLink Server</text>
     <!-- Extension -->
     <rect x="434" y="35" width="160" height="52" rx="7" fill="#141414" stroke="#333" stroke-width="1.2"/>
     <text x="514" y="56" text-anchor="middle" font-size="10" fill="#555" font-family="Inter,sans-serif">robinhood.com</text>
@@ -740,7 +740,7 @@ function openHelp() {
   </svg>
 
   <h3>Why?</h3>
-  <p>Robinhood doesn't offer a public API — but your browser has full authenticated access. Hood-link bridges that gap, turning your logged-in Chrome session into a private API you can call from anywhere on your machine.</p>
+  <p>Robinhood doesn't offer a public API — but your browser has full authenticated access. HoodLink bridges that gap, turning your logged-in Chrome session into a private API you can call from anywhere on your machine.</p>
   <ul>
     <li><strong>Automate trades</strong> — place equity and options orders programmatically. See the <a href="https://github.com/superagenta110y/hood-link#disclaimer" target="_blank" style="color:var(--accent)">disclaimer</a> before use.</li>
     <li><strong>Extract market data</strong> — pull quotes, history, options chains, and fundamentals into your own apps without scraping.</li>
@@ -914,7 +914,7 @@ function requireKey() {
   void input.offsetWidth; // reflow to restart animation
   input.classList.add("error");
   input.focus();
-  showResponse(null, "API key required — check the terminal where Hood-link is running, then enter it above.", 0, 0);
+  showResponse(null, "API key required — check the terminal where HoodLink is running, then enter it above.", 0, 0);
   return false;
 }
 function $(id) { return document.getElementById(id); }
@@ -2452,7 +2452,7 @@ setInterval(checkStatus, 3000);
 
 <div id="onboardModal">
   <div class="onboard-box">
-    <div class="onboard-title">Secure your Hood-link</div>
+    <div class="onboard-title">Secure your HoodLink</div>
     <div class="onboard-sub">A unique API key has been generated for you. Copy it and set it as <code>HOODLINK_API_KEY</code> before starting the server to prevent unauthorized access.</div>
     <div class="onboard-key-wrap">
       <span class="onboard-key" id="onboardKey"></span>
@@ -2468,14 +2468,14 @@ setInterval(checkStatus, 3000);
 <div id="connectedModal" onclick="this.classList.remove('visible')">
   <div class="modal-card">
     <div class="modal-logo">
-      <img src="/logo.svg" alt="Hood-link">
+      <img src="/logo.svg" alt="HoodLink">
     </div>
     <div class="modal-check">
       <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
         <polyline points="20 6 9 17 4 12"></polyline>
       </svg>
     </div>
-    <div class="modal-title">Hood-link is connected</div>
+    <div class="modal-title">HoodLink is connected</div>
     <div class="modal-sub">click anywhere to dismiss</div>
   </div>
 </div>

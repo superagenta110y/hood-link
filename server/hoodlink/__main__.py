@@ -21,7 +21,7 @@ def main() -> None:
     print(f"\n{color}{_BANNER}{reset}\n", file=sys.stderr)
 
     parser = argparse.ArgumentParser(
-        prog="hood-link-server", description="Hood-link bridge server"
+        prog="hoodlink-server", description="HoodLink bridge server"
     )
     parser.add_argument(
         "--api-key",
