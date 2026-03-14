@@ -6,6 +6,10 @@
 
 <p align="center">⚡ Local bridge to Robinhood's private API via a Chrome extension and a FastAPI server. ⚡</p>
 
+<p align="center">
+  <video src="https://github.com/user-attachments/assets/b2751ce7-0779-45c6-8d48-299a2059b9f0" controls width="100%"></video>
+</p>
+
 ## Table of Contents
 
 - [📋 Prerequisites](#-prerequisites)

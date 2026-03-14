@@ -2853,7 +2853,7 @@ function _hasChartData(sym, ct) {
     case "order":     { const b = _orderBook.get(sym); return b != null && (b.bids.size + b.asks.size) > 0; }
     case "orderflow": return td().length >= 1;
     case "bookmap":  { const b = _orderBook.get(sym); return b != null && (b.bids.size > 0 || b.asks.size > 0); }
-    case "pressure": return (_chartData.get(`${sym}|Quote`) || []).filter(d => d.bidPrice != null).length >= 2;
+    case "pressure": return (_chartData.get(`${sym}|Quote`) || []).filter(d => d.bidPrice != null).length >= 2 || (_orderBBO.get(sym) || []).length >= 2;
     case "spread":   return (_chartData.get(`${sym}|Candle`) || []).length >= 1 && (_chartData.get(`${sym}|Quote`) || []).filter(d => d.bidPrice != null).length >= 2;
     case "profile":    { const b = _orderBook.get(sym); return b != null && (b.bids.size + b.asks.size) > 0 && (_chartData.get(`${sym}|Candle`) || []).length >= 1; }
     case "footprint":   return td().length >= 2;
@@ -3648,30 +3648,41 @@ function _buildLwBookmapCandles(sym) {
 
 
 // Pressure BBO data: plain bid/ask lines + floating bubbles on a hidden mid series.
-// Each bubble's y-position = size-weighted price between bid and ask, so it floats
-// closer to whichever side has more order pressure rather than sitting on a line.
+// Bid/ask lines merge Order BBO (frequent, even AH) with Quote BBO (sparse AH, has sizes).
+// Bubbles only appear at Quote timestamps since they need bid/ask sizes to position correctly.
 function _buildLwPressureBboData(sym) {
-  const pts = (_chartData.get(`${sym}|Quote`) || []).filter(d => d.bidPrice != null && d.askPrice != null);
-  const byTime = new Map();
-  for (const p of pts) byTime.set(Math.floor(p.t / 1000), p);
-  const ts = [...byTime.keys()].sort((a, b) => a - b);
-  const bid = ts.map(t => ({ time: t, value: byTime.get(t).bidPrice }));
-  const ask = ts.map(t => ({ time: t, value: byTime.get(t).askPrice }));
+  // Seed bid/ask lines from Order BBO — updated on every order event, responsive AH
+  const bidByTime = new Map(), askByTime = new Map();
+  for (const p of (_orderBBO.get(sym) || [])) {
+    const t = Math.floor(p.t / 1000);
+    if (p.bid != null) bidByTime.set(t, p.bid);
+    if (p.ask != null) askByTime.set(t, p.ask);
+  }
+  // Overlay Quote data — overrides Order BBO where quotes exist, and provides size info
+  const quotePts = (_chartData.get(`${sym}|Quote`) || []).filter(d => d.bidPrice != null && d.askPrice != null);
+  const quoteByTime = new Map();
+  for (const p of quotePts) {
+    const t = Math.floor(p.t / 1000);
+    quoteByTime.set(t, p);
+    bidByTime.set(t, p.bidPrice);
+    askByTime.set(t, p.askPrice);
+  }
 
-  // Normalise total size to 95th percentile for bubble sizing
-  const allTotals = ts.map(t => { const p = byTime.get(t); return (p.bidSize || 0) + (p.askSize || 0); })
-    .filter(s => s > 0).sort((a, b) => a - b);
+  const allTs = [...new Set([...bidByTime.keys(), ...askByTime.keys()])].sort((a, b) => a - b);
+  const bid = allTs.filter(t => bidByTime.has(t)).map(t => ({ time: t, value: bidByTime.get(t) }));
+  const ask = allTs.filter(t => askByTime.has(t)).map(t => ({ time: t, value: askByTime.get(t) }));
+
+  // Bubbles: only where Quote data exists (need sizes to compute weighted position)
+  const allTotals = [...quoteByTime.values()]
+    .map(p => (p.bidSize || 0) + (p.askSize || 0)).filter(s => s > 0).sort((a, b) => a - b);
   const maxTotal = allTotals[Math.floor(allTotals.length * 0.95)] || allTotals[allTotals.length - 1] || 1;
 
-  const midBubble = [];
-  const midBubbleMarkers = [];
-  for (const t of ts) {
-    const p = byTime.get(t);
+  const midBubble = [], midBubbleMarkers = [];
+  for (const [t, p] of quoteByTime) {
     const bSz = p.bidSize || 0, aSz = p.askSize || 0, total = bSz + aSz;
     if (total === 0) continue;
-    // Weighted price: leans toward bid when bid-heavy, toward ask when ask-heavy
     const weightedPrice = (p.bidPrice * bSz + p.askPrice * aSz) / total;
-    const imb = (bSz - aSz) / total; // +1 = all bid, −1 = all ask
+    const imb = (bSz - aSz) / total;
     const sz = Math.max(1, Math.min(4, Math.round((total / maxTotal) * 4)));
     const alpha = (0.3 + (sz / 4) * 0.7).toFixed(2);
     const color = imb >= 0 ? `rgba(34,197,94,${alpha})` : `rgba(239,68,68,${alpha})`;
